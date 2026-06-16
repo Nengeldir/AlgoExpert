@@ -1,0 +1,14 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+COPY apps/frontend/package.json ./apps/frontend/
+RUN npm install --workspace=apps/frontend
+
+# Copy source
+COPY apps/frontend ./apps/frontend
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--workspace=apps/frontend", "--", "--host", "0.0.0.0"]

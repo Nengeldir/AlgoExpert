@@ -1,0 +1,38 @@
+{
+  "name": "expert-algo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/frontend",
+    "apps/backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\"",
+    "build": "npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "test": "npm run test --workspace=apps/backend && npm run test --workspace=apps/frontend",
+    "seed": "npm run seed --workspace=apps/backend",
+    "lint": "eslint apps --ext .ts,.tsx",
+    "format": "prettier --write apps",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.5",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "apps/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "apps/**/*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}

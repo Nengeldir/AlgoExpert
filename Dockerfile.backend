@@ -1,0 +1,15 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+RUN apk add --no-cache python3 make g++
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+COPY apps/backend/package.json ./apps/backend/
+RUN npm install --workspace=apps/backend
+
+# Copy source
+COPY apps/backend ./apps/backend
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--workspace=apps/backend"]

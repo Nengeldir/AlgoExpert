@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_PATH=/data/app.db
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-admin-token}
+      - PORT=3000
+      - CORS_ORIGIN=http://localhost:5173
+    volumes:
+      - db-data:/data
+      - ./apps/backend/src:/app/apps/backend/src:ro
+    networks:
+      - app-net
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - '5173:5173'
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-net
+
+volumes:
+  db-data:
+
+networks:
+  app-net:
+    driver: bridge
