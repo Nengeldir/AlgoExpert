@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError, type Question } from '../api/client'
 
+function formatViews(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`
+  return n.toLocaleString()
+}
+
 export default function Today() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,10 +34,12 @@ export default function Today() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Today&apos;s Questions</h1>
+      <h1 className="page-title">Today</h1>
 
       {questions.length === 0 && (
-        <div className="empty-state">No open questions right now. Check back later.</div>
+        <div className="empty-state">
+          No open questions right now. Check History for past questions.
+        </div>
       )}
 
       {questions.map((q) => (
@@ -133,6 +141,7 @@ function QuestionCard({
         {(['A', 'B'] as const).map((opt) => {
           const label = opt === 'A' ? question.option_a : question.option_b
           const thumb = opt === 'A' ? question.option_a_image : question.option_b_image
+          const views = opt === 'A' ? question.option_a_views : question.option_b_views
           const isCorrect = question.is_resolved && question.ground_truth === opt
           return (
             <button
@@ -149,6 +158,9 @@ function QuestionCard({
                 {label}
                 {isCorrect && ' ✓'}
               </span>
+              {views != null && (
+                <span className="option-views">{formatViews(views)} views at start</span>
+              )}
             </button>
           )
         })}

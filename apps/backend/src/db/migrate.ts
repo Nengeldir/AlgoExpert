@@ -36,6 +36,15 @@ CREATE TABLE IF NOT EXISTS votes (
 CREATE INDEX IF NOT EXISTS idx_votes_user    ON votes(user_id);
 CREATE INDEX IF NOT EXISTS idx_votes_question ON votes(question_id);
 
+CREATE TABLE IF NOT EXISTS smi_questions (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_date TEXT    NOT NULL UNIQUE,
+  question_id   INTEGER REFERENCES questions(id),
+  prev_close    REAL    NOT NULL,
+  prev_date     TEXT    NOT NULL,
+  created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS youtube_suggestions (
   id                   INTEGER PRIMARY KEY AUTOINCREMENT,
   suggested_date       TEXT    NOT NULL UNIQUE,

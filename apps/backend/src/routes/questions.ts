@@ -9,14 +9,14 @@ export async function questionRoutes(app: FastifyInstance) {
       const userId = request.user.userId
       const now = new Date().toISOString()
 
-      // Questions whose deadline is in the future OR that resolved within the last 7 days
+      // Only open questions (deadline in the future); past questions belong in History
       const questions = app.db
         .prepare(
           `SELECT * FROM questions
-           WHERE deadline > ? OR resolved_at > datetime(?, '-7 days')
+           WHERE deadline > ?
            ORDER BY deadline ASC`,
         )
-        .all(now, now) as QuestionRow[]
+        .all(now) as QuestionRow[]
 
       const enriched = questions.map((q) => {
         const vote = app.db
