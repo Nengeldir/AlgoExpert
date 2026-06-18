@@ -1,5 +1,8 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 WORKDIR /app
+
+# Disable husky git hooks — they serve no purpose inside a container
+ENV HUSKY=0
 
 # Install dependencies
 COPY package.json package-lock.json* ./

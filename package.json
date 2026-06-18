@@ -13,7 +13,7 @@
     "seed": "npm run seed --workspace=apps/backend",
     "lint": "eslint apps --ext .ts,.tsx",
     "format": "prettier --write apps",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

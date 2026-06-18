@@ -130,28 +130,28 @@ function QuestionCard({
       )}
 
       <div className="options-grid">
-        <button
-          className={optionClass('A')}
-          onClick={() => {
-            void handleVote('A')
-          }}
-          disabled={!canVote || voting}
-          aria-pressed={question.user_vote === 'A'}
-        >
-          {question.option_a}
-          {question.is_resolved && question.ground_truth === 'A' && ' ✓'}
-        </button>
-        <button
-          className={optionClass('B')}
-          onClick={() => {
-            void handleVote('B')
-          }}
-          disabled={!canVote || voting}
-          aria-pressed={question.user_vote === 'B'}
-        >
-          {question.option_b}
-          {question.is_resolved && question.ground_truth === 'B' && ' ✓'}
-        </button>
+        {(['A', 'B'] as const).map((opt) => {
+          const label = opt === 'A' ? question.option_a : question.option_b
+          const thumb = opt === 'A' ? question.option_a_image : question.option_b_image
+          const isCorrect = question.is_resolved && question.ground_truth === opt
+          return (
+            <button
+              key={opt}
+              className={optionClass(opt)}
+              onClick={() => {
+                void handleVote(opt)
+              }}
+              disabled={!canVote || voting}
+              aria-pressed={question.user_vote === opt}
+            >
+              {thumb && <img src={thumb} alt="" className="option-thumb" />}
+              <span>
+                {label}
+                {isCorrect && ' ✓'}
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {!question.is_open && !question.is_resolved && (

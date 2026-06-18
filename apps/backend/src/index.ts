@@ -8,6 +8,7 @@ import { questionRoutes } from './routes/questions'
 import { voteRoutes } from './routes/votes'
 import { historyRoutes } from './routes/history'
 import { adminRoutes } from './routes/admin'
+import { youtubeRoutes } from './routes/youtube'
 
 const app = Fastify({
   logger: {
@@ -42,6 +43,7 @@ async function start() {
   await app.register(voteRoutes, { prefix: '/api/votes' })
   await app.register(historyRoutes, { prefix: '/api/history' })
   await app.register(adminRoutes, { prefix: '/admin' })
+  await app.register(youtubeRoutes, { prefix: '/admin/youtube' })
 
   const port = parseInt(process.env.PORT ?? '3000', 10)
   await app.listen({ port, host: '0.0.0.0' })

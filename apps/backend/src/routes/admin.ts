@@ -159,6 +159,46 @@ export async function adminRoutes(app: FastifyInstance) {
     },
   })
 
+  app.delete<{ Params: { id: string } }>('/questions/:id', {
+    handler: async (request, reply) => {
+      const questionId = parseInt(request.params.id, 10)
+
+      const question = app.db.prepare('SELECT id FROM questions WHERE id = ?').get(questionId)
+      if (!question) return reply.status(404).send({ error: 'Question not found.' })
+
+      app.db.transaction(() => {
+        app.db.prepare('DELETE FROM votes WHERE question_id = ?').run(questionId)
+        // Remove the YouTube suggestion that published this question so a fresh one can be fetched
+        app.db.prepare('DELETE FROM youtube_suggestions WHERE question_id = ?').run(questionId)
+        app.db.prepare('DELETE FROM questions WHERE id = ?').run(questionId)
+      })()
+
+      return reply.status(204).send()
+    },
+  })
+
+  // Votes for a single question (inline view)
+  app.get<{ Params: { id: string } }>('/questions/:id/votes', {
+    handler: async (request, reply) => {
+      const questionId = parseInt(request.params.id, 10)
+
+      const question = app.db.prepare('SELECT id FROM questions WHERE id = ?').get(questionId)
+      if (!question) return reply.status(404).send({ error: 'Question not found.' })
+
+      const votes = app.db
+        .prepare(
+          `SELECT u.pseudonym, v.choice, v.is_correct, v.voted_at
+           FROM votes v
+           JOIN users u ON u.id = v.user_id
+           WHERE v.question_id = ?
+           ORDER BY u.pseudonym ASC`,
+        )
+        .all(questionId) as QuestionVoteRow[]
+
+      return reply.send({ votes })
+    },
+  })
+
   // List all questions (admin overview)
   app.get('/questions', {
     handler: async (_request, reply) => {
@@ -174,6 +214,13 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.send({ questions })
     },
   })
+}
+
+interface QuestionVoteRow {
+  pseudonym: string
+  choice: 'A' | 'B'
+  is_correct: 0 | 1 | null
+  voted_at: string
 }
 
 interface VoteExportRow {

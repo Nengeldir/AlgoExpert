@@ -35,6 +35,24 @@ CREATE TABLE IF NOT EXISTS votes (
 
 CREATE INDEX IF NOT EXISTS idx_votes_user    ON votes(user_id);
 CREATE INDEX IF NOT EXISTS idx_votes_question ON votes(question_id);
+
+CREATE TABLE IF NOT EXISTS youtube_suggestions (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  suggested_date       TEXT    NOT NULL UNIQUE,
+  video_a_id           TEXT    NOT NULL,
+  video_a_title        TEXT    NOT NULL,
+  video_a_channel      TEXT    NOT NULL,
+  video_a_thumbnail    TEXT,
+  video_a_subscribers  INTEGER,
+  video_b_id           TEXT    NOT NULL,
+  video_b_title        TEXT    NOT NULL,
+  video_b_channel      TEXT    NOT NULL,
+  video_b_thumbnail    TEXT,
+  video_b_subscribers  INTEGER,
+  approved             INTEGER NOT NULL DEFAULT 0,
+  question_id          INTEGER REFERENCES questions(id),
+  created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
+);
 `
 
 export function initDb(dbPath: string): BetterSqlite3.Database {
@@ -50,5 +68,25 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
   db.pragma('foreign_keys = ON')
 
   db.exec(SCHEMA)
+
+  // Additive column migrations — safe to run on every start
+  const alterations = [
+    'ALTER TABLE questions ADD COLUMN option_a_image TEXT',
+    'ALTER TABLE questions ADD COLUMN option_b_image TEXT',
+    'ALTER TABLE questions ADD COLUMN option_a_views INTEGER',
+    'ALTER TABLE questions ADD COLUMN option_b_views INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN video_a_published_at TEXT',
+    'ALTER TABLE youtube_suggestions ADD COLUMN video_a_views INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN video_b_published_at TEXT',
+    'ALTER TABLE youtube_suggestions ADD COLUMN video_b_views INTEGER',
+  ]
+  for (const sql of alterations) {
+    try {
+      db.exec(sql)
+    } catch {
+      /* column already exists */
+    }
+  }
+
   return db
 }

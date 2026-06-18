@@ -1,6 +1,13 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 WORKDIR /app
-RUN apk add --no-cache python3 make g++
+
+# Build tools needed to compile better-sqlite3 native addon
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ wget \
+  && rm -rf /var/lib/apt/lists/*
+
+# Disable husky git hooks — they serve no purpose inside a container
+ENV HUSKY=0
 
 # Install dependencies
 COPY package.json package-lock.json* ./

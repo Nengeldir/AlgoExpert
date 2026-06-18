@@ -7,47 +7,83 @@ Students vote daily on binary prediction questions; the data is analyzed live in
 
 ## Quick Start
 
-```bash
-# 1. Copy environment variables
-cp .env.example .env
-# Edit .env: set JWT_SECRET and ADMIN_TOKEN to strong random values
+> **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be running.
 
-# 2. Start with Docker (hot-reload for both services)
-make dev
-# or: docker compose up --build
-
-# 3. Seed test data (run once, in a second terminal)
-make seed
-# or: docker compose exec backend npm run seed
-
-# 4. Open http://localhost:5173
+**Windows (PowerShell)**
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+# second terminal:
+docker compose exec backend npm run seed
 ```
 
-After `make dev` + `make seed`:
-- Register with a pseudonym, vote on a seeded question, view it in History.
-- Admin operations work via `curl` (see below).
+**macOS / Linux**
+```bash
+cp .env.example .env
+docker compose up --build
+# second terminal:
+docker compose exec backend npm run seed
+```
+
+Then open **http://localhost:5173** — register a pseudonym, vote on a seeded question, view it in History.
+
+To stop: press `Ctrl+C`, then `docker compose down`.
 
 ---
 
 ## Local Development (without Docker)
 
-Requires **Node.js 20+**.
+Requires **Node.js 20+** (`node --version` to check).
 
+**Windows (PowerShell)**
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run dev       # backend :3000 + frontend :5173
+# second terminal:
+npm run seed
+```
+
+**macOS / Linux**
 ```bash
 npm install
 cp .env.example .env
-npm run dev     # starts both backend :3000 and frontend :5173
-npm run seed    # populate test data
+npm run dev       # backend :3000 + frontend :5173
+# second terminal:
+npm run seed
+```
+
+To run each service in its own terminal instead:
+
+```powershell
+# Terminal 1
+npm run dev --workspace=apps/backend
+# Terminal 2
+npm run dev --workspace=apps/frontend
 ```
 
 ---
 
 ## Admin Operations
 
-All admin endpoints require the bearer token from `ADMIN_TOKEN` in your `.env`.
+All admin endpoints require the `ADMIN_TOKEN` from your `.env` (default dev value: `dev-admin-token`).
 
 ### Create a question
 
+**Windows (PowerShell — `Invoke-RestMethod`)**
+```powershell
+$h = @{ Authorization = "Bearer dev-admin-token"; "Content-Type" = "application/json" }
+$b = @{
+    title       = "Will it snow in Zurich?"
+    description = "Forecast for next Monday."
+    option_a    = "Yes"
+    option_b    = "No"
+    deadline    = "2026-06-20T23:59:00.000Z"
+} | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri http://localhost:3000/admin/questions -Headers $h -Body $b
+```
+
+**macOS / Linux (curl)**
 ```bash
 curl -X POST http://localhost:3000/admin/questions \
   -H "Authorization: Bearer dev-admin-token" \
@@ -61,10 +97,20 @@ curl -X POST http://localhost:3000/admin/questions \
   }'
 ```
 
+---
+
 ### Resolve a question (set ground truth)
 
-Replace `1` with the question id returned above.
+Replace `1` with the question `id` from the create response.
 
+**Windows (PowerShell)**
+```powershell
+$h = @{ Authorization = "Bearer dev-admin-token"; "Content-Type" = "application/json" }
+Invoke-RestMethod -Method POST -Uri http://localhost:3000/admin/questions/1/resolve `
+  -Headers $h -Body (@{ ground_truth = "B" } | ConvertTo-Json)
+```
+
+**macOS / Linux**
 ```bash
 curl -X POST http://localhost:3000/admin/questions/1/resolve \
   -H "Authorization: Bearer dev-admin-token" \
@@ -72,36 +118,89 @@ curl -X POST http://localhost:3000/admin/questions/1/resolve \
   -d '{"ground_truth": "B"}'
 ```
 
-### Export all votes (JSON)
+---
 
-```bash
-curl -H "Authorization: Bearer dev-admin-token" \
-  http://localhost:3000/admin/export
+### Export all votes
+
+**Windows (PowerShell)**
+```powershell
+$h = @{ Authorization = "Bearer dev-admin-token" }
+
+# JSON
+Invoke-RestMethod -Uri http://localhost:3000/admin/export -Headers $h
+
+# CSV — saved to file
+Invoke-RestMethod -Uri "http://localhost:3000/admin/export?format=csv" -Headers $h -OutFile votes.csv
 ```
 
-### Export as CSV (for spreadsheet / lecture)
-
+**macOS / Linux**
 ```bash
+# JSON
+curl -H "Authorization: Bearer dev-admin-token" http://localhost:3000/admin/export
+
+# CSV
 curl -H "Authorization: Bearer dev-admin-token" \
   "http://localhost:3000/admin/export?format=csv" -o votes.csv
 ```
 
+---
+
 ### List all questions
 
+**Windows (PowerShell)**
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000/admin/questions `
+  -Headers @{ Authorization = "Bearer dev-admin-token" }
+```
+
+**macOS / Linux**
 ```bash
-curl -H "Authorization: Bearer dev-admin-token" \
-  http://localhost:3000/admin/questions
+curl -H "Authorization: Bearer dev-admin-token" http://localhost:3000/admin/questions
 ```
 
 ---
 
 ## Running Tests
 
-```bash
-make test
-# or individually:
+```powershell
+# All tests (backend + frontend)
+npm run test
+
+# Backend only
 npm run test --workspace=apps/backend
+
+# Frontend only
 npm run test --workspace=apps/frontend
+```
+
+*(Same command on all platforms.)*
+
+---
+
+## Resetting the Database
+
+**Windows (PowerShell)**
+```powershell
+# Docker
+docker compose down -v
+docker compose up --build -d
+docker compose exec backend npm run seed
+
+# Local dev
+Remove-Item -Path apps\backend\data\app.db -ErrorAction SilentlyContinue
+npm run seed
+```
+
+**macOS / Linux**
+```bash
+# Docker
+docker compose down -v
+docker compose up --build -d
+docker compose exec backend npm run seed
+
+# Local dev
+rm -f apps/backend/data/app.db
+npm run seed
 ```
 
 ---
@@ -127,7 +226,8 @@ webapp/
 │   ├── algorithm.md
 │   └── extending.md
 ├── docker-compose.yml
-├── Makefile
+├── Dockerfile.backend
+├── Dockerfile.frontend
 └── .env.example
 ```
 
@@ -143,6 +243,22 @@ webapp/
 | `PORT`          | Backend listen port                   | `3000`                    |
 | `CORS_ORIGIN`   | Allowed CORS origin                   | `http://localhost:5173`   |
 | `VITE_API_URL`  | API base URL (frontend, build-time)   | `` (uses Vite proxy)      |
+
+---
+
+## Troubleshooting
+
+**Windows: `curl` behaves differently in PowerShell**
+PowerShell aliases `curl` to `Invoke-WebRequest` (different flags). Use `Invoke-RestMethod` as shown above, or use Git Bash where standard `curl` works.
+
+**Docker healthcheck keeps failing**
+Run `docker compose logs backend` — if the backend started successfully the issue is likely a stale cached image. Run `docker compose up --build` to force a rebuild.
+
+**Port already in use**
+Stop the conflicting process or change the ports in `docker-compose.yml` and `.env`.
+
+**`npm run dev` fails locally**
+Make sure `npm install` has been run and Node.js 20+ is active (`node --version`).
 
 ---
 

@@ -31,6 +31,10 @@ export interface QuestionRow {
   option_a: string
   option_b: string
   image_url: string | null
+  option_a_image: string | null
+  option_b_image: string | null
+  option_a_views: number | null
+  option_b_views: number | null
   deadline: string
   resolved_at: string | null
   ground_truth: 'A' | 'B' | null
