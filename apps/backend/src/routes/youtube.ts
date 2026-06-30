@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { requireAdmin } from '../plugins/authenticate'
 import { fetchYoutubePair } from '../services/youtube'
+import { resolveExpiredYoutubeQuestions } from '../services/youtubeResolver'
 import type { QuestionRow } from '../types'
 
 export interface YoutubeSuggestionRow {
@@ -100,6 +101,20 @@ export async function youtubeRoutes(app: FastifyInstance) {
     },
   })
 
+  // POST /admin/youtube/resolve — resolve any YouTube questions whose deadline has passed.
+  // Call this hourly from an external cron service.
+  app.post('/resolve', {
+    handler: async (_request, reply) => {
+      const apiKey = process.env.YOUTUBE_API_KEY
+      if (!apiKey) {
+        return reply.status(503).send({ error: 'YOUTUBE_API_KEY is not configured on the server.' })
+      }
+      const messages: string[] = []
+      await resolveExpiredYoutubeQuestions(app.db, apiKey, (msg) => messages.push(msg))
+      return reply.send({ ok: true, log: messages })
+    },
+  })
+
   // POST /admin/youtube/approve — approve today's pending suggestion and publish it as a question
   app.post('/approve', {
     handler: async (_request, reply) => {
@@ -110,11 +125,9 @@ export async function youtubeRoutes(app: FastifyInstance) {
         .get(today) as YoutubeSuggestionRow | undefined
 
       if (!suggestion) {
-        return reply
-          .status(404)
-          .send({
-            error: 'No pending YouTube suggestion for today. Already approved or none generated.',
-          })
+        return reply.status(404).send({
+          error: 'No pending YouTube suggestion for today. Already approved or none generated.',
+        })
       }
 
       // Deadline = 24 hours from now

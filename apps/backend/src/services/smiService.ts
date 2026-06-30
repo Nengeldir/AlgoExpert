@@ -1,42 +1,31 @@
 import type BetterSqlite3 from 'better-sqlite3'
 
-const SMI_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ESSMI'
-
-interface YahooChartResponse {
-  chart: {
-    result?: Array<{
-      timestamp: number[]
-      indicators: { quote: Array<{ close: (number | null)[] }> }
-    }>
-    error?: { code: string; description: string } | null
-  }
-}
+// Stooq is a reliable alternative to Yahoo Finance that works from cloud IPs.
+// Returns a CSV with columns: Date,Open,High,Low,Close,Volume (YYYY-MM-DD dates).
+const STOOQ_URL = 'https://stooq.com/q/d/l/?s=%5Esmi&i=d'
 
 interface DayClose {
-  date: string // YYYY-MM-DD (UTC calendar date from Yahoo timestamp)
+  date: string // YYYY-MM-DD
   close: number
 }
 
 async function fetchRecentCloses(): Promise<DayClose[]> {
-  const res = await fetch(`${SMI_URL}?interval=1d&range=7d`, {
+  const res = await fetch(STOOQ_URL, {
     headers: { 'User-Agent': 'Mozilla/5.0' },
   })
-  if (!res.ok) throw new Error(`Yahoo Finance HTTP ${res.status}`)
-  const data = (await res.json()) as YahooChartResponse
-  if (data.chart.error) throw new Error(`Yahoo Finance: ${data.chart.error.description}`)
+  if (!res.ok) throw new Error(`Stooq HTTP ${res.status}`)
+  const text = await res.text()
 
-  const result = data.chart.result?.[0]
-  if (!result) throw new Error('No SMI data in response')
+  const lines = text.trim().split('\n')
+  if (lines.length < 2) throw new Error('Stooq: no data rows')
 
   const closes: DayClose[] = []
-  const { timestamp } = result
-  const closeArr = result.indicators.quote[0].close
-
-  for (let i = 0; i < timestamp.length; i++) {
-    const close = closeArr[i]
-    if (close != null) {
-      closes.push({ date: new Date(timestamp[i] * 1000).toISOString().slice(0, 10), close })
-    }
+  for (const line of lines.slice(1)) {
+    const parts = line.split(',')
+    if (parts.length < 5) continue
+    const date = parts[0].trim()
+    const close = parseFloat(parts[4])
+    if (date && !isNaN(close)) closes.push({ date, close })
   }
 
   return closes.sort((a, b) => a.date.localeCompare(b.date))

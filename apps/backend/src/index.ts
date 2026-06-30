@@ -9,8 +9,7 @@ import { voteRoutes } from './routes/votes'
 import { historyRoutes } from './routes/history'
 import { adminRoutes } from './routes/admin'
 import { youtubeRoutes } from './routes/youtube'
-import { resolveExpiredYoutubeQuestions } from './services/youtubeResolver'
-import { createDailySmiQuestion, resolveExpiredSmiQuestions } from './services/smiService'
+import { smiRoutes } from './routes/smi'
 
 const app = Fastify({
   logger: {
@@ -46,31 +45,7 @@ async function start() {
   await app.register(historyRoutes, { prefix: '/api/history' })
   await app.register(adminRoutes, { prefix: '/admin' })
   await app.register(youtubeRoutes, { prefix: '/admin/youtube' })
-
-  // Auto-resolve expired YouTube 24h-race questions every 5 minutes
-  const RESOLVE_INTERVAL = 5 * 60 * 1000
-  const runResolver = () => {
-    const apiKey = process.env.YOUTUBE_API_KEY
-    if (!apiKey) return
-    resolveExpiredYoutubeQuestions(db, apiKey, (msg) => app.log.info(msg)).catch((err: unknown) =>
-      app.log.error({ err }, 'youtube auto-resolver crashed'),
-    )
-  }
-  runResolver() // run once immediately on startup to catch anything that expired while the server was down
-  setInterval(runResolver, RESOLVE_INTERVAL)
-
-  // SMI daily question creation + auto-resolution every 15 minutes
-  const SMI_INTERVAL = 15 * 60 * 1000
-  const runSmi = () => {
-    createDailySmiQuestion(db, (msg) => app.log.info(msg)).catch((err: unknown) =>
-      app.log.error({ err }, 'smi question creator crashed'),
-    )
-    resolveExpiredSmiQuestions(db, (msg) => app.log.info(msg)).catch((err: unknown) =>
-      app.log.error({ err }, 'smi resolver crashed'),
-    )
-  }
-  runSmi()
-  setInterval(runSmi, SMI_INTERVAL)
+  await app.register(smiRoutes, { prefix: '/admin/smi' })
 
   const port = parseInt(process.env.PORT ?? '3000', 10)
   await app.listen({ port, host: '0.0.0.0' })
