@@ -58,6 +58,24 @@ curl -H "Authorization: Bearer dev-admin-token" http://localhost:3000/admin/expo
 curl -H "Authorization: Bearer dev-admin-token" "http://localhost:3000/admin/export?format=csv" -o votes.csv
 ```
 
+### Cron jobs (production — cron-job.org)
+
+All automated question creation and resolution is driven by external HTTP cron jobs rather than in-process timers, so the Railway container can sleep between requests.
+
+All three jobs use:
+- **Method:** `POST`
+- **Header:** `Authorization: Bearer <ADMIN_TOKEN>` (the value set in Railway's environment variables)
+
+| Job | URL | Cron schedule | Notes |
+|-----|-----|---------------|-------|
+| SMI — create question | `/admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET (UTC+1). Change to `0 6 * * 1-5` during CEST (UTC+2, late Mar – late Oct) |
+| SMI — resolve question | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET. Change to `30 15 * * 1-5` during CEST |
+| YouTube — resolve | `/admin/youtube/resolve` | `0 * * * *` | Every hour; timezone-agnostic |
+
+**SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer. The simplest workaround is to run both UTC offset schedules year-round — all endpoints are idempotent so duplicate calls are harmless.
+
+**YouTube creation** remains manual: visit `/admin/youtube/suggest` to fetch a pair, then `/admin/youtube/approve` to publish it as a question.
+
 ## Architecture
 
 ### Monorepo layout

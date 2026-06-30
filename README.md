@@ -160,6 +160,45 @@ curl -H "Authorization: Bearer dev-admin-token" http://localhost:3000/admin/ques
 
 ---
 
+## Automated Question Lifecycle (Production)
+
+In production on Railway, there are no in-process timers — the container can sleep between requests. Instead, three HTTP cron jobs on [cron-job.org](https://cron-job.org) (free) drive question creation and resolution.
+
+### How to set up on cron-job.org
+
+1. Sign up at [cron-job.org](https://cron-job.org)
+2. Create each job below with:
+   - **Request method:** `POST`
+   - **Header key:** `Authorization`
+   - **Header value:** `Bearer <your ADMIN_TOKEN from Railway>`
+
+### Jobs
+
+| Job | Endpoint | Cron schedule | When |
+|-----|----------|---------------|------|
+| SMI — create question | `POST /admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET Mon–Fri |
+| SMI — resolve question | `POST /admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET Mon–Fri |
+| YouTube — resolve | `POST /admin/youtube/resolve` | `0 * * * *` | Every hour |
+
+**SMI timezone:** Switzerland uses CET (UTC+1) in winter and CEST (UTC+2) in summer (late March – late October). During summer, change the SMI schedules to `0 6 * * 1-5` and `30 15 * * 1-5`. Alternatively, keep both variants active year-round — all endpoints are idempotent so a duplicate call does nothing.
+
+### What each job does
+
+- **`/admin/smi/daily`** — fetches the previous SMI close from Stooq and creates today's question. Skips weekends and days where a question already exists.
+- **`/admin/smi/resolve`** — fetches today's closing price and resolves the question as A (higher) or B (flat/lower). Skips if market data is not yet available. Automatically removes questions on public holidays when no data arrives.
+- **`/admin/youtube/resolve`** — finds YouTube questions whose 24-hour deadline has passed, fetches current view counts, and resolves whichever video gained more views. Ties are left pending until the next hourly run.
+
+### YouTube question creation (manual)
+
+YouTube questions require admin approval before publishing:
+
+1. Go to `/admin/login` and sign in with your `ADMIN_TOKEN`
+2. Navigate to **Admin → Suggest** to fetch a video pair from YouTube
+3. Review the pair and click **Approve** to publish it with a 24-hour deadline
+4. The hourly cron job will resolve it automatically once the deadline passes
+
+---
+
 ## Running Tests
 
 ```powershell
