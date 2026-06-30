@@ -16,6 +16,11 @@ COPY apps/backend/package.json ./apps/backend/
 RUN npm install --workspace=apps/backend
 
 COPY apps/backend ./apps/backend
+
+# Run the test suite as part of the build. If any test fails, the build
+# aborts here and Railway marks the deploy as failed (tests gate deploys).
+RUN npm run test --workspace=apps/backend
+
 RUN npm run build --workspace=apps/backend
 
 # ---- runtime stage ----
@@ -23,14 +28,22 @@ FROM node:20-slim AS runtime
 WORKDIR /app/apps/backend
 ENV NODE_ENV=production HUSKY=0
 
+# gosu lets us drop from root to the node user after fixing volume ownership.
+RUN apt-get update && apt-get install -y --no-install-recommends gosu wget \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/apps/backend/node_modules ./node_modules
 COPY --from=build /app/apps/backend/dist ./dist
 COPY --from=build /app/apps/backend/package.json ./
 
-# Railway mounts the volume at /data; ensure it exists and is writable.
-RUN mkdir -p /data
-USER node
+# Entrypoint runs as root AFTER Railway mounts the volume at /data, so it can
+# take ownership of the mount (Railway mounts it root-owned), then drop to the
+# unprivileged node user to actually run the app.
+COPY deploy/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
 
+# NOTE: no `USER node` here — the entrypoint starts as root and drops via gosu.
+ENTRYPOINT ["/usr/local/bin/backend-entrypoint.sh"]
 # Railway sets PORT at runtime; the app already reads process.env.PORT.
 CMD ["node", "dist/index.js"]
