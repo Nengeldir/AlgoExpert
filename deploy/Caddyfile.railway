@@ -1,0 +1,14 @@
+# Railway frontend: plain static file server, no TLS (Railway's edge handles HTTPS).
+# Listens on the PORT Railway injects. SPA fallback routes unknown paths to
+# index.html so React Router works on deep links / refresh.
+:{$PORT} {
+	root * /srv
+	encode gzip
+	try_files {path} /index.html
+	file_server
+
+	# Do not let the browser cache the service worker or HTML shell, so
+	# students always get the latest deployed version.
+	@nocache path /sw.js /index.html /manifest.json
+	header @nocache Cache-Control "no-cache"
+}

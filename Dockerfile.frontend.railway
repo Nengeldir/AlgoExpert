@@ -1,0 +1,28 @@
+# Railway frontend service.
+# Builds the React/Vite SPA into static files and serves them with Caddy in
+# plain file-server mode. Railway terminates HTTPS, so no certs/proxy here.
+#
+# VITE_API_URL must point at the backend service's public Railway URL and is
+# baked in at BUILD time (Vite inlines env vars during the build). Set it as a
+# build arg / service variable in Railway BEFORE deploying — see deploy notes.
+
+# ---- build stage ----
+FROM node:20-slim AS build
+WORKDIR /app
+ENV HUSKY=0
+
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
+COPY package.json package-lock.json* ./
+COPY apps/frontend/package.json ./apps/frontend/
+RUN npm install --workspace=apps/frontend
+
+COPY apps/frontend ./apps/frontend
+RUN npm run build --workspace=apps/frontend
+
+# ---- runtime stage ----
+FROM caddy:2-alpine AS runtime
+COPY --from=build /app/apps/frontend/dist /srv
+COPY deploy/Caddyfile.railway /etc/caddy/Caddyfile
+# Railway provides PORT; Caddy reads it via the {$PORT} placeholder.

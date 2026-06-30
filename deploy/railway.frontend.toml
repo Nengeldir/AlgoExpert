@@ -1,0 +1,17 @@
+# Railway service config for the FRONTEND (static SPA via Caddy).
+# Set this service's "Config-as-code path" to deploy/railway.frontend.toml.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.frontend.railway"
+
+# VITE_API_URL is consumed at build time. Set it as a service variable in
+# Railway (Variables tab) so it is passed to the Docker build as a build arg,
+# OR hardcode it here under [build.args] once you know the backend URL:
+#
+# [build.args]
+# VITE_API_URL = "https://algoexpert-backend-production.up.railway.app"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

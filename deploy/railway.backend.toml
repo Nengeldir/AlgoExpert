@@ -1,0 +1,20 @@
+# Railway service config for the BACKEND.
+# In the Railway dashboard, create a service from this repo and set its
+# "Config-as-code path" to deploy/railway.backend.toml (or rename this to
+# railway.toml inside a dedicated service root if you split repos later).
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.backend.railway"
+
+[deploy]
+# The app exposes /health (returns {status:"ok"}); Railway uses it to gate
+# traffic until the service is actually ready.
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# NOTE: do NOT enable scale-to-zero ("serverless") on this service.
+# The backend runs setInterval jobs (YouTube + SMI auto-resolvers) that must
+# keep ticking; sleeping the container would stop them.

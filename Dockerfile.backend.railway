@@ -1,0 +1,36 @@
+# Railway backend service.
+# Railway injects PORT and terminates HTTPS itself, so there is no Caddy here.
+# The SQLite file lives on a Railway volume mounted at /data.
+
+# ---- build stage ----
+FROM node:20-slim AS build
+WORKDIR /app
+ENV HUSKY=0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json* ./
+COPY apps/backend/package.json ./apps/backend/
+RUN npm install --workspace=apps/backend
+
+COPY apps/backend ./apps/backend
+RUN npm run build --workspace=apps/backend
+
+# ---- runtime stage ----
+FROM node:20-slim AS runtime
+WORKDIR /app/apps/backend
+ENV NODE_ENV=production HUSKY=0
+
+COPY --from=build /app/node_modules /app/node_modules
+COPY --from=build /app/apps/backend/node_modules ./node_modules
+COPY --from=build /app/apps/backend/dist ./dist
+COPY --from=build /app/apps/backend/package.json ./
+
+# Railway mounts the volume at /data; ensure it exists and is writable.
+RUN mkdir -p /data
+USER node
+
+# Railway sets PORT at runtime; the app already reads process.env.PORT.
+CMD ["node", "dist/index.js"]
