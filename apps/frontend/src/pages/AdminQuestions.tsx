@@ -371,7 +371,7 @@ export default function AdminQuestions() {
             {!ytSuggestion && (
               <button
                 className="btn btn--sm btn--primary"
-                onClick={handleYoutubeSuggest}
+                onClick={() => handleYoutubeSuggest()}
                 disabled={ytLoading}
               >
                 {ytLoading ? 'Fetching…' : 'Generate Suggestion'}

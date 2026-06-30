@@ -1,19 +1,25 @@
 import type Database from 'better-sqlite3'
 
-// Augment Fastify instance to carry the db connection and authenticated user
+export interface JwtPayload {
+  userId: number
+  pseudonym: string
+}
+
+// Augment Fastify instance to carry the db connection + authenticate decorator.
 declare module 'fastify' {
   interface FastifyInstance {
     db: Database.Database
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
   }
-  interface FastifyRequest {
-    user: JwtPayload
-  }
 }
 
-export interface JwtPayload {
-  userId: number
-  pseudonym: string
+// Tell @fastify/jwt the concrete shape of our token payload and request.user,
+// instead of redeclaring FastifyRequest.user (which conflicts with the plugin).
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    payload: JwtPayload
+    user: JwtPayload
+  }
 }
 
 // Database row shapes

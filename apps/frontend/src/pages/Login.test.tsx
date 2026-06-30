@@ -28,7 +28,9 @@ function renderLogin() {
 }
 
 describe('Login page', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('renders login form', () => {
     renderLogin()

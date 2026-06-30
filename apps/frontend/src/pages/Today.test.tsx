@@ -19,6 +19,10 @@ const openQuestion: client.Question = {
   option_a: 'Yes',
   option_b: 'No',
   image_url: null,
+  option_a_image: null,
+  option_b_image: null,
+  option_a_views: null,
+  option_b_views: null,
   deadline: new Date(Date.now() + 86400000).toISOString(),
   is_open: true,
   is_resolved: false,
@@ -28,7 +32,9 @@ const openQuestion: client.Question = {
 }
 
 describe('Today page', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('renders questions', async () => {
     vi.mocked(client.api.getQuestions).mockResolvedValueOnce({ questions: [openQuestion] })

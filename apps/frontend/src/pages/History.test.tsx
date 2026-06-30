@@ -27,7 +27,9 @@ const historyItem: client.HistoryItem = {
 }
 
 describe('History page', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   it('renders history items', async () => {
     vi.mocked(client.api.getHistory).mockResolvedValueOnce({ history: [historyItem] })
