@@ -33,6 +33,23 @@ async function start() {
     secret: process.env.JWT_SECRET ?? 'change-me-in-production',
   })
 
+  // cron-job.org (and similar schedulers) send Content-Type: application/json
+  // with no body on parameter-less POST requests. Fastify's default JSON
+  // parser rejects that as FST_ERR_CTP_EMPTY_JSON_BODY, so treat an empty
+  // body as `{}` instead of erroring.
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_request, body, done) => {
+    const text = body as string
+    if (text.trim() === '') {
+      done(null, {})
+      return
+    }
+    try {
+      done(null, JSON.parse(text))
+    } catch (err) {
+      done(err as Error, undefined)
+    }
+  })
+
   // Register the authenticate decorator (adds app.authenticate and requireAdmin)
   await registerAuth(app)
 
