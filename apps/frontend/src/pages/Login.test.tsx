@@ -62,4 +62,16 @@ describe('Login page', () => {
     fireEvent.click(screen.getByRole('button', { name: /log in/i }))
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/today'))
   })
+
+  it('accepts an email address in the identifier field', async () => {
+    vi.mocked(client.api.login).mockResolvedValueOnce({ token: 'tok', pseudonym: 'alice' })
+    renderLogin()
+    fireEvent.change(screen.getByLabelText(/pseudonym/i), {
+      target: { value: 'alice@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pass123' } })
+    fireEvent.click(screen.getByRole('button', { name: /log in/i }))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/today'))
+    expect(client.api.login).toHaveBeenCalledWith('alice@example.com', 'pass123')
+  })
 })

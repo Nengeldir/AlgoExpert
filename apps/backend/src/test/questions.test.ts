@@ -10,7 +10,7 @@ async function registerAndLogin(app: ReturnType<typeof buildTestApp>, pseudonym:
   const res = await app.inject({
     method: 'POST',
     url: '/api/auth/login',
-    payload: { pseudonym, password: 'pass123' },
+    payload: { identifier: pseudonym, password: 'pass123' },
   })
   return res.json<{ token: string }>().token
 }

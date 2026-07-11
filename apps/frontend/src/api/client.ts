@@ -74,10 +74,10 @@ export const api = {
     })
   },
 
-  login(pseudonym: string, password: string) {
+  login(identifier: string, password: string) {
     return request<{ token: string; pseudonym: string }>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ pseudonym, password }),
+      body: JSON.stringify({ identifier, password }),
     })
   },
 

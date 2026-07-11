@@ -5,7 +5,7 @@ import AuthCard from '../components/AuthCard'
 
 export default function Login() {
   const navigate = useNavigate()
-  const [pseudonym, setPseudonym] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -15,7 +15,7 @@ export default function Login() {
     setError(null)
     setLoading(true)
     try {
-      const { token } = await api.login(pseudonym, password)
+      const { token } = await api.login(identifier, password)
       setToken(token)
       navigate('/today')
     } catch (err) {
@@ -35,13 +35,13 @@ export default function Login() {
         noValidate
       >
         <div className="form-group">
-          <label htmlFor="pseudonym">Pseudonym</label>
+          <label htmlFor="identifier">Pseudonym or email</label>
           <input
-            id="pseudonym"
+            id="identifier"
             type="text"
-            value={pseudonym}
-            onChange={(e) => setPseudonym(e.target.value)}
-            placeholder="Your pseudonym"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            placeholder="Your pseudonym or email"
             required
             autoComplete="username"
             autoFocus

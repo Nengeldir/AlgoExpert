@@ -16,7 +16,7 @@ interface RegisterBody {
 }
 
 interface LoginBody {
-  pseudonym: string
+  identifier: string
   password: string
 }
 
@@ -91,27 +91,27 @@ export async function authRoutes(app: FastifyInstance) {
     schema: {
       body: {
         type: 'object',
-        required: ['pseudonym', 'password'],
+        required: ['identifier', 'password'],
         properties: {
-          pseudonym: { type: 'string' },
+          identifier: { type: 'string' },
           password: { type: 'string' },
         },
       },
     },
     handler: async (request, reply) => {
-      const { pseudonym, password } = request.body
+      const { identifier, password } = request.body
 
-      const user = app.db.prepare('SELECT * FROM users WHERE pseudonym = ?').get(pseudonym) as
-        | UserRow
-        | undefined
+      const user = app.db
+        .prepare('SELECT * FROM users WHERE pseudonym = ? OR email = ?')
+        .get(identifier, identifier) as UserRow | undefined
 
       if (!user) {
-        return reply.status(401).send({ error: 'Invalid pseudonym or password.' })
+        return reply.status(401).send({ error: 'Invalid pseudonym/email or password.' })
       }
 
       const valid = await bcrypt.compare(password, user.password_hash)
       if (!valid) {
-        return reply.status(401).send({ error: 'Invalid pseudonym or password.' })
+        return reply.status(401).send({ error: 'Invalid pseudonym/email or password.' })
       }
 
       const payload: JwtPayload = { userId: user.id, pseudonym: user.pseudonym }

@@ -137,11 +137,21 @@ describe('POST /api/auth/login', () => {
   })
   afterAll(() => app.close())
 
-  it('returns a token on valid credentials', async () => {
+  it('returns a token on valid credentials via pseudonym', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { pseudonym: 'loginuser', password: 'mypassword' },
+      payload: { identifier: 'loginuser', password: 'mypassword' },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json<{ token: string }>().token).toBeTruthy()
+  })
+
+  it('returns a token on valid credentials via email', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { identifier: 'loginuser@example.com', password: 'mypassword' },
     })
     expect(res.statusCode).toBe(200)
     expect(res.json<{ token: string }>().token).toBeTruthy()
@@ -151,7 +161,16 @@ describe('POST /api/auth/login', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { pseudonym: 'loginuser', password: 'wrongpass' },
+      payload: { identifier: 'loginuser', password: 'wrongpass' },
+    })
+    expect(res.statusCode).toBe(401)
+  })
+
+  it('rejects an unknown identifier', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { identifier: 'nobody', password: 'whatever' },
     })
     expect(res.statusCode).toBe(401)
   })
@@ -230,14 +249,14 @@ describe('Password reset flow', () => {
     const oldLogin = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { pseudonym: 'resetuser', password: 'original-pw' },
+      payload: { identifier: 'resetuser', password: 'original-pw' },
     })
     expect(oldLogin.statusCode).toBe(401)
 
     const newLogin = await app.inject({
       method: 'POST',
       url: '/api/auth/login',
-      payload: { pseudonym: 'resetuser', password: 'new-password' },
+      payload: { identifier: 'resetuser', password: 'new-password' },
     })
     expect(newLogin.statusCode).toBe(200)
 
