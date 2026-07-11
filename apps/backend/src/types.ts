@@ -26,7 +26,17 @@ declare module '@fastify/jwt' {
 export interface UserRow {
   id: number
   pseudonym: string
+  email: string
   password_hash: string
+  created_at: string
+}
+
+export interface PasswordResetRow {
+  id: number
+  user_id: number
+  token_hash: string
+  expires_at: string
+  used_at: string | null
   created_at: string
 }
 

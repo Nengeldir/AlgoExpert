@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { api, setToken, ApiError } from '../api/client'
 import AuthCard from '../components/AuthCard'
 
@@ -59,6 +59,9 @@ export default function Login() {
             required
             autoComplete="current-password"
           />
+          <span className="form-hint">
+            <Link to="/forgot-password">Forgot password?</Link>
+          </span>
         </div>
 
         {error && (

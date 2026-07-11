@@ -589,6 +589,10 @@ label {
   color: var(--color-outline);
 }
 
+.form-hint a {
+  color: var(--color-primary);
+}
+
 input[type='text'],
 input[type='password'] {
   width: 100%;

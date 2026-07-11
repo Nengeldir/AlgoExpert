@@ -6,6 +6,7 @@ import AuthCard from '../components/AuthCard'
 export default function Register() {
   const navigate = useNavigate()
   const [pseudonym, setPseudonym] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [consent, setConsent] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +17,7 @@ export default function Register() {
     setError(null)
     setLoading(true)
     try {
-      const { token } = await api.register(pseudonym, password, consent)
+      const { token } = await api.register(pseudonym, email, password, consent)
       setToken(token)
       navigate('/today')
     } catch (err) {
@@ -50,6 +51,22 @@ export default function Register() {
             autoFocus
           />
           <span className="form-hint">3–30 characters: letters, digits, hyphens, underscores</span>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            autoComplete="email"
+          />
+          <span className="form-hint">
+            Used only to recover your account if you forget your password — never shown publicly.
+          </span>
         </div>
 
         <div className="form-group">

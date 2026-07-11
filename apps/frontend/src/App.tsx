@@ -10,6 +10,8 @@ import {
 import { isLoggedIn, clearToken, isAdminLoggedIn, clearAdminToken } from './api/client'
 import Register from './pages/Register'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Today from './pages/Today'
 import History from './pages/History'
 import AdminLogin from './pages/AdminLogin'
@@ -147,6 +149,8 @@ export default function App() {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/today"
           element={

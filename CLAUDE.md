@@ -97,15 +97,17 @@ npm workspaces link both packages under a single `node_modules` at the root.
 | `db/migrate.ts` | `initDb(path)` — creates SQLite file, sets WAL mode, runs schema DDL |
 | `db/seed.ts` | Standalone script; run with `npm run seed` |
 | `plugins/authenticate.ts` | `registerAuth(app)` adds `app.authenticate` (JWT preHandler); `requireAdmin` checks `ADMIN_TOKEN` bearer |
-| `routes/auth.ts` | `POST /api/auth/register`, `POST /api/auth/login` |
+| `routes/auth.ts` | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
 | `routes/questions.ts` | `GET /api/questions` — enriched with per-user vote status |
 | `routes/votes.ts` | `POST /api/votes` |
 | `routes/history.ts` | `GET /api/history` — past questions with own vote only |
 | `routes/admin.ts` | `POST /admin/questions`, `POST /admin/questions/:id/resolve`, `GET /admin/export`, `GET /admin/questions` |
 
-**Auth flow:** `POST /api/auth/register` → bcrypt hash → JWT (30 d). All `/api/*` routes use `preHandler: [app.authenticate]`. All `/admin/*` routes use `addHook('preHandler', requireAdmin)` which checks the `Authorization: Bearer <ADMIN_TOKEN>` header against the env var.
+**Auth flow:** `POST /api/auth/register` (pseudonym + email + password) → bcrypt hash → JWT (30 d). Login is still pseudonym + password only; email is a private recovery channel, never shown publicly, to preserve the pseudonymous identity used in lecture. All `/api/*` routes use `preHandler: [app.authenticate]`. All `/admin/*` routes use `addHook('preHandler', requireAdmin)` which checks the `Authorization: Bearer <ADMIN_TOKEN>` header against the env var.
 
-**SQLite schema:** three tables — `users`, `questions`, `votes`. `votes.is_correct` is `NULL` until resolved, then `0|1`. The resolve endpoint runs a transaction that sets `ground_truth` on the question and bulk-updates `is_correct` on all votes in one shot.
+**Password reset:** `POST /api/auth/forgot-password { email }` always returns a generic 200 (no user enumeration); if the email matches an account it emails a one-time link via `services/email.ts` (Resend API, `RESEND_API_KEY`/`EMAIL_FROM` env vars — falls back to logging the link to the console when `RESEND_API_KEY` is unset, so local dev needs no email account). The link points at `${CORS_ORIGIN}/reset-password?token=...`; `POST /api/auth/reset-password { token, password }` looks up the SHA-256 hash of the token in `password_resets`, rejects if missing/expired/used, otherwise updates `password_hash` and marks the token used. Tokens expire after 1 hour.
+
+**SQLite schema:** `users`, `password_resets`, `questions`, `votes` (plus `smi_questions`/`youtube_suggestions` for automated question sources). `votes.is_correct` is `NULL` until resolved, then `0|1`. The resolve endpoint runs a transaction that sets `ground_truth` on the question and bulk-updates `is_correct` on all votes in one shot.
 
 **Testing:** `src/test/helpers.ts` builds a full app wired to `:memory:` SQLite — no disk I/O, no shared state between suites. Tests run serially (`singleFork: true`) because better-sqlite3 is synchronous and single-writer.
 
@@ -115,7 +117,7 @@ npm workspaces link both packages under a single `node_modules` at the root.
 |------|---------|
 | `api/client.ts` | All `fetch` calls, token storage (`localStorage`), `ApiError` class, shared response types |
 | `App.tsx` | Router, `<Header>`, `<RequireAuth>` guard |
-| `pages/` | `Register`, `Login`, `Today` (voting), `History` |
+| `pages/` | `Register`, `Login`, `ForgotPassword`, `ResetPassword`, `Today` (voting), `History` |
 | `tokens.css` | CSS custom properties — **single source of truth** for all colors, spacing, typography |
 | `index.css` | Reset + all component styles, imports `tokens.css` |
 

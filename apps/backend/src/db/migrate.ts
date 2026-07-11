@@ -10,6 +10,17 @@ CREATE TABLE IF NOT EXISTS users (
   created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS password_resets (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  token_hash TEXT    NOT NULL,
+  expires_at TEXT    NOT NULL,
+  used_at    TEXT,
+  created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token_hash);
+
 CREATE TABLE IF NOT EXISTS questions (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   title        TEXT NOT NULL,
@@ -80,6 +91,7 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
 
   // Additive column migrations — safe to run on every start
   const alterations = [
+    'ALTER TABLE users ADD COLUMN email TEXT',
     'ALTER TABLE questions ADD COLUMN option_a_image TEXT',
     'ALTER TABLE questions ADD COLUMN option_b_image TEXT',
     'ALTER TABLE questions ADD COLUMN option_a_views INTEGER',
@@ -96,6 +108,9 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
       /* column already exists */
     }
   }
+
+  // Deferred until after the email column exists (fresh DBs get it via SCHEMA + ALTER above)
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)')
 
   return db
 }

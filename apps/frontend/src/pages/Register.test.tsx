@@ -39,6 +39,7 @@ describe('Register page', () => {
     renderRegister()
     expect(screen.getByRole('heading', { name: /join expert algo/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/pseudonym/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/i agree/i)).toBeInTheDocument()
   })
@@ -56,6 +57,7 @@ describe('Register page', () => {
     renderRegister()
 
     fireEvent.change(screen.getByLabelText(/pseudonym/i), { target: { value: 'dupeuser' } })
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: 'dupe@example.com' } })
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pass123' } })
     fireEvent.click(screen.getByLabelText(/i agree/i))
     fireEvent.click(screen.getByRole('button', { name: /register/i }))
@@ -70,10 +72,12 @@ describe('Register page', () => {
     renderRegister()
 
     fireEvent.change(screen.getByLabelText(/pseudonym/i), { target: { value: 'newuser' } })
+    fireEvent.change(screen.getByLabelText(/^email$/i), { target: { value: 'new@example.com' } })
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'pass123' } })
     fireEvent.click(screen.getByLabelText(/i agree/i))
     fireEvent.click(screen.getByRole('button', { name: /register/i }))
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/today'))
+    expect(client.api.register).toHaveBeenCalledWith('newuser', 'new@example.com', 'pass123', true)
   })
 })
