@@ -28,6 +28,7 @@ export interface UserRow {
   pseudonym: string
   email: string
   password_hash: string
+  email_notifications: 0 | 1
   created_at: string
 }
 

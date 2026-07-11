@@ -4,6 +4,7 @@ import cors from '@fastify/cors'
 import { initDb } from './db/migrate'
 import { registerAuth } from './plugins/authenticate'
 import { authRoutes } from './routes/auth'
+import { meRoutes } from './routes/me'
 import { questionRoutes } from './routes/questions'
 import { voteRoutes } from './routes/votes'
 import { historyRoutes } from './routes/history'
@@ -59,6 +60,7 @@ async function start() {
   app.get('/health', async () => ({ status: 'ok' }))
 
   await app.register(authRoutes, { prefix: '/api/auth' })
+  await app.register(meRoutes, { prefix: '/api/me' })
   await app.register(questionRoutes, { prefix: '/api/questions' })
   await app.register(voteRoutes, { prefix: '/api/votes' })
   await app.register(historyRoutes, { prefix: '/api/history' })

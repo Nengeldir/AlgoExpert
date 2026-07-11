@@ -98,6 +98,7 @@ npm workspaces link both packages under a single `node_modules` at the root.
 | `db/seed.ts` | Standalone script; run with `npm run seed` |
 | `plugins/authenticate.ts` | `registerAuth(app)` adds `app.authenticate` (JWT preHandler); `requireAdmin` checks `ADMIN_TOKEN` bearer |
 | `routes/auth.ts` | `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` |
+| `routes/me.ts` | `GET /api/me` — own profile + settings; `PATCH /api/me/settings` — update `email_notifications` |
 | `routes/questions.ts` | `GET /api/questions` — enriched with per-user vote status |
 | `routes/votes.ts` | `POST /api/votes` |
 | `routes/history.ts` | `GET /api/history` — past questions with own vote only |
@@ -117,7 +118,7 @@ npm workspaces link both packages under a single `node_modules` at the root.
 |------|---------|
 | `api/client.ts` | All `fetch` calls, token storage (`localStorage`), `ApiError` class, shared response types |
 | `App.tsx` | Router, `<Header>`, `<RequireAuth>` guard |
-| `pages/` | `Register`, `Login`, `ForgotPassword`, `ResetPassword`, `Today` (voting), `History` |
+| `pages/` | `Register`, `Login`, `ForgotPassword`, `ResetPassword`, `Today` (voting), `History`, `Settings` |
 | `tokens.css` | CSS custom properties — **single source of truth** for all colors, spacing, typography |
 | `index.css` | Reset + all component styles, imports `tokens.css` |
 

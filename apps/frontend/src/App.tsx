@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Today from './pages/Today'
 import History from './pages/History'
+import Settings from './pages/Settings'
 import AdminLogin from './pages/AdminLogin'
 import AdminQuestions from './pages/AdminQuestions'
 import Logo from './components/Logo'
@@ -42,6 +43,7 @@ export function Icon({ name, className }: { name: string; className?: string }) 
 const NAV_ITEMS = [
   { to: '/today', icon: 'today', label: "Today's Questions", shortLabel: 'Today' },
   { to: '/history', icon: 'history', label: 'Answer History', shortLabel: 'History' },
+  { to: '/settings', icon: 'settings', label: 'Settings', shortLabel: 'Settings' },
   {
     to: '/admin/questions',
     icon: 'admin_panel_settings',
@@ -167,6 +169,16 @@ export default function App() {
             <RequireAuth>
               <Layout>
                 <History />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Settings />
               </Layout>
             </RequireAuth>
           }

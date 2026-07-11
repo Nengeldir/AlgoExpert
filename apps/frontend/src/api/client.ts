@@ -109,6 +109,17 @@ export const api = {
   getHistory() {
     return request<{ history: HistoryItem[] }>('/api/history')
   },
+
+  getMe() {
+    return request<{ profile: UserProfile }>('/api/me')
+  },
+
+  updateSettings(email_notifications: boolean) {
+    return request<{ email_notifications: boolean }>('/api/me/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ email_notifications }),
+    })
+  },
 }
 
 async function adminRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -241,6 +252,13 @@ export const adminApi = {
 }
 
 // Shared response types used by the frontend
+export interface UserProfile {
+  pseudonym: string
+  email: string
+  email_notifications: boolean
+  created_at: string
+}
+
 export interface Question {
   id: number
   title: string

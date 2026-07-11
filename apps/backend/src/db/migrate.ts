@@ -92,6 +92,7 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
   // Additive column migrations — safe to run on every start
   const alterations = [
     'ALTER TABLE users ADD COLUMN email TEXT',
+    'ALTER TABLE users ADD COLUMN email_notifications INTEGER NOT NULL DEFAULT 1',
     'ALTER TABLE questions ADD COLUMN option_a_image TEXT',
     'ALTER TABLE questions ADD COLUMN option_b_image TEXT',
     'ALTER TABLE questions ADD COLUMN option_a_views INTEGER',
