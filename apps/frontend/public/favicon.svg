@@ -1,5 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#1a56db"/>
-  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-        font-family="monospace" font-size="18" fill="white" font-weight="bold">E</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="60" fill="#ffffff"/>
+  <g fill="#1f407a">
+    <path d="M60 6 L70 43 L50 43 Z"/>
+    <path d="M60 114 L70 77 L50 77 Z"/>
+    <path d="M6 60 L43 70 L43 50 Z"/>
+    <path d="M114 60 L77 70 L77 50 Z"/>
+    <path d="M60 22 L67 39 L53 39 Z" transform="rotate(45 60 60)"/>
+    <path d="M60 22 L67 39 L53 39 Z" transform="rotate(135 60 60)"/>
+    <path d="M60 22 L67 39 L53 39 Z" transform="rotate(225 60 60)"/>
+    <path d="M60 22 L67 39 L53 39 Z" transform="rotate(315 60 60)"/>
+  </g>
+  <circle cx="60" cy="60" r="32" fill="none" stroke="#1f407a" stroke-width="9"/>
+  <circle cx="60" cy="60" r="25" fill="#ffffff"/>
+  <path d="M43 62 L57 76 L88 36" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="square"/>
+  <path d="M43 62 L57 76 L88 36" fill="none" stroke="#1f407a" stroke-width="11" stroke-linecap="square"/>
 </svg>

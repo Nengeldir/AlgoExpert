@@ -1,0 +1,309 @@
+<!DOCTYPE html><html class="h-full" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Settings - ETH Vote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#495f86",
+                      "on-primary-fixed": "#001a42",
+                      "primary-fixed-dim": "#aec6ff",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-container": "#b9cffd",
+                      "tertiary-fixed-dim": "#bbc6e9",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#1f407a",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "outline-variant": "#c4c6d1",
+                      "inverse-primary": "#aec6ff",
+                      "secondary-fixed": "#d7e3ff",
+                      "surface-container": "#f0eded",
+                      "on-tertiary-container": "#a2adcf",
+                      "surface-container-high": "#eae7e7",
+                      "tertiary": "#202b46",
+                      "surface-bright": "#fcf9f8",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-container": "#42587f",
+                      "on-tertiary": "#ffffff",
+                      "outline": "#747781",
+                      "on-surface-variant": "#434750",
+                      "on-background": "#1b1c1c",
+                      "on-primary-container": "#90adef",
+                      "inverse-surface": "#303030",
+                      "on-primary-fixed-variant": "#254580",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#3f5d99",
+                      "tertiary-container": "#36415e",
+                      "on-secondary-fixed": "#001b3e",
+                      "tertiary-fixed": "#dae2ff",
+                      "background": "#fcf9f8",
+                      "on-tertiary-fixed-variant": "#3b4663",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed-variant": "#30476d",
+                      "inverse-on-surface": "#f3f0ef",
+                      "surface": "#fcf9f8",
+                      "on-surface": "#1b1c1c",
+                      "on-tertiary-fixed": "#0f1b35",
+                      "primary": "#002961",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e5e2e1",
+                      "secondary-fixed-dim": "#b1c7f4",
+                      "surface-dim": "#dcd9d9",
+                      "on-secondary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "container-max": "1280px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      }
+              }
+            },
+          }
+      </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col p-gutter gap-4 h-screen w-64 fixed left-0 top-0 border-r border-outline-variant bg-surface-container-low z-40">
+<div class="mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Student Portal</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">ETH Zurich</p>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">today</span>
+                    Today's Questions
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">history</span>
+                    Answer History
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container text-on-secondary-container font-bold font-label-md text-label-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">settings</span>
+                    Settings
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+                    Admin View
+                </a>
+</li>
+</ul>
+<div class="mt-auto">
+<button class="w-full flex items-center justify-center gap-2 px-4 py-3 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+</div>
+</nav>
+<!-- TopNavBar (Mobile) -->
+<header class="md:hidden bg-surface flex justify-between items-center w-full px-margin-mobile h-16 border-b border-outline-variant fixed top-0 left-0 right-0 z-50">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ETH Vote</h1>
+<button class="text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 w-full pt-20 md:pt-8 px-margin-mobile md:px-margin-desktop md:ml-64 pb-24 max-w-container-max mx-auto">
+<header class="mb-12">
+<h2 class="font-display-lg text-display-lg text-on-surface mb-2">Settings</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Manage your account preferences and system configurations.</p>
+</header>
+<div class="grid grid-cols-1 gap-8 max-w-3xl">
+<!-- User Profile Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8">
+<h3 class="font-headline-md text-headline-md text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined">person</span>
+                    User Profile
+                </h3>
+<div class="flex items-start gap-6 mb-8">
+
+<div>
+<p class="font-body-lg text-body-lg font-semibold text-on-surface">USERNAME: &lt;Best-Predictor&gt;</p>
+
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">ETH Email</label>
+<div class="px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">mail</span>
+                            anna.schmidt@inf.ethz.ch
+                        </div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Student ID</label>
+<div class="px-4 py-3 bg-surface-container-low border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">badge</span>
+                            20-123-456
+                        </div>
+</div>
+</div>
+
+</section>
+<!-- Preferences Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8">
+<h3 class="font-headline-md text-headline-md text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined">tune</span>
+                    Preferences
+                </h3>
+<!-- Notifications -->
+<div class="mb-8 border-b border-outline-variant pb-8">
+<div class="flex items-center justify-between">
+<div>
+<h4 class="font-body-lg text-body-lg font-semibold text-on-surface">New Question Alerts</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Receive notifications when new questions are added to your queue.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value="">
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div><div class="mb-8 border-b border-outline-variant pb-8"><div class="flex items-center justify-between"><div><h4 class="font-body-lg text-body-lg font-semibold text-on-surface">Account Security</h4><p class="font-body-md text-body-md text-on-surface-variant mt-1">Update your password to keep your account secure.</p></div><button class="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors active:scale-95"><span class="material-symbols-outlined">lock</span>Reset Password</button></div></div>
+<!-- Theme Selection -->
+<div class="mb-8 border-b border-outline-variant pb-8">
+<h4 class="font-body-lg text-body-lg font-semibold text-on-surface mb-4">Interface Theme</h4>
+<div class="flex gap-4">
+<label class="flex-1 cursor-pointer">
+<input checked="" class="peer sr-only" name="theme" type="radio" value="light">
+<div class="p-4 border border-outline-variant rounded-lg text-center peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:text-on-primary-fixed transition-colors">
+<span class="material-symbols-outlined block mb-2 mx-auto" style="font-size: 24px;">light_mode</span>
+<span class="font-label-md text-label-md">Light</span>
+</div>
+</label>
+<label class="flex-1 cursor-pointer">
+<input class="peer sr-only" name="theme" type="radio" value="dark">
+<div class="p-4 border border-outline-variant rounded-lg text-center peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:text-on-primary-fixed transition-colors opacity-50 cursor-not-allowed" title="Dark mode temporarily disabled">
+<span class="material-symbols-outlined block mb-2 mx-auto" style="font-size: 24px;">dark_mode</span>
+<span class="font-label-md text-label-md">Dark</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Privacy Settings -->
+
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 w-full md:w-[calc(100%-16rem)] bg-surface border-t border-outline-variant py-4 px-margin-mobile md:px-margin-desktop z-30">
+<div class="flex justify-between items-center max-w-container-max mx-auto">
+<span class="font-label-sm text-label-sm text-on-surface-variant">ETH Vote Version 2.4.1</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">© ETH Zurich Imprint</span>
+</div>
+</footer>
+
+
+
+
+</body></html>

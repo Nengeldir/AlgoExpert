@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ETH Vote - Admin View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#495f86",
+                        "on-primary-fixed": "#001a42",
+                        "primary-fixed-dim": "#aec6ff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-container": "#b9cffd",
+                        "tertiary-fixed-dim": "#bbc6e9",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#1f407a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c4c6d1",
+                        "inverse-primary": "#aec6ff",
+                        "secondary-fixed": "#d7e3ff",
+                        "surface-container": "#f0eded",
+                        "on-tertiary-container": "#a2adcf",
+                        "surface-container-high": "#eae7e7",
+                        "tertiary": "#202b46",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-container": "#42587f",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#747781",
+                        "on-surface-variant": "#434750",
+                        "on-background": "#1b1c1c",
+                        "on-primary-container": "#90adef",
+                        "inverse-surface": "#303030",
+                        "on-primary-fixed-variant": "#254580",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#3f5d99",
+                        "tertiary-container": "#36415e",
+                        "on-secondary-fixed": "#001b3e",
+                        "tertiary-fixed": "#dae2ff",
+                        "background": "#fcf9f8",
+                        "on-tertiary-fixed-variant": "#3b4663",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#30476d",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface": "#fcf9f8",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed": "#0f1b35",
+                        "primary": "#002961",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e5e2e1",
+                        "secondary-fixed-dim": "#b1c7f4",
+                        "surface-dim": "#dcd9d9",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["JetBrains Mono"],
+                        "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background h-full flex font-body-md">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col p-gutter gap-4 bg-surface-container-low h-screen w-64 fixed left-0 top-0 border-r border-outline-variant z-10">
+<div class="mb-8 mt-4">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Student Portal</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">ETH Zurich</p>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">today</span>
+                Today's Questions
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">history</span>
+                Answer History
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+<a class="flex items-center gap-3 p-3 rounded-lg bg-secondary-container text-on-secondary-container font-bold transition-colors font-label-md text-label-md active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+                Admin View
+            </a>
+</div>
+<button class="mt-auto flex items-center gap-2 p-3 text-error hover:bg-error-container hover:text-on-error-container rounded-lg transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined">logout</span>
+            Logout
+        </button>
+</nav>
+<!-- TopNavBar (Mobile) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-16 bg-surface border-b border-outline-variant fixed top-0 z-20">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ETH Vote</h1>
+<button class="material-symbols-outlined text-primary">menu</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 mt-16 md:mt-0 p-margin-mobile md:p-margin-desktop bg-background overflow-y-auto">
+<div class="max-w-container-max mx-auto space-y-12 pb-24">
+<header class="mb-8">
+<h2 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-on-surface mb-2">Admin Dashboard</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">System overview and control center for ETH Vote.</p>
+</header>
+<!-- Section 1: Dashboard Stats (Bento Grid) -->
+<section aria-labelledby="stats-heading">
+<h3 class="sr-only" id="stats-heading">Key Statistics</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md uppercase tracking-wider">Total Users</span>
+<span class="material-symbols-outlined">group</span>
+</div>
+<div class="font-display-lg text-display-lg text-primary">
+                            1,432
+                        </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="text-primary">+12%</span> this week
+                        </div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md uppercase tracking-wider">Total Votes Cast</span>
+<span class="material-symbols-outlined">how_to_vote</span>
+</div>
+<div class="font-display-lg text-display-lg text-primary">
+                            45.2K
+                        </div>
+<div class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+                            Avg 31 per active user
+                        </div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-6 flex flex-col gap-4 shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-md text-label-md uppercase tracking-wider">Crowd Accuracy</span>
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div class="flex items-baseline gap-2">
+<div class="font-display-lg text-display-lg text-primary">87.4%</div>
+<div class="font-body-md text-body-md text-on-surface-variant">vs. Gold Truth</div>
+</div>
+<div class="w-full bg-surface-variant h-2 rounded-full overflow-hidden mt-2">
+<div class="bg-primary h-full" style="width: 87.4%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Question Control -->
+<section aria-labelledby="qc-heading" class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<div class="p-6 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface" id="qc-heading">Question Control</h3>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Manage active and past questions.</p>
+</div>
+<div class="flex gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary-fixed hover:text-on-primary-fixed rounded-lg transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">download</span>
+                            Export CSV
+                        </button>
+<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg transition-colors font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+                            Add New Question
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-outline-variant font-label-md text-label-md text-on-surface-variant">
+<th class="p-4 font-medium uppercase tracking-wider">Status</th>
+<th class="p-4 font-medium uppercase tracking-wider">Question</th>
+<th class="p-4 font-medium uppercase tracking-wider">Votes</th>
+<th class="p-4 font-medium uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm uppercase tracking-wider border border-[#bbf7d0]">Active</span>
+</td>
+<td class="p-4 font-medium max-w-md truncate">Will the SNB raise interest rates in Q3?</td>
+<td class="p-4 font-label-md text-label-md">1,204</td>
+<td class="p-4 text-right flex justify-end gap-2">
+<button class="p-2 text-primary hover:bg-primary-fixed rounded transition-colors" title="Resolve">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</button>
+<button class="p-2 text-error hover:bg-error-container rounded transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider border border-outline-variant">Resolved</span>
+</td>
+<td class="p-4 font-medium max-w-md truncate">Outcome of the federal energy referendum.</td>
+<td class="p-4 font-label-md text-label-md">3,492</td>
+<td class="p-4 text-right flex justify-end gap-2">
+<span class="text-on-surface-variant font-label-sm text-label-sm self-center mr-2">Truth: YES</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4">
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm uppercase tracking-wider border border-[#bbf7d0]">Active</span>
+</td>
+<td class="p-4 font-medium max-w-md truncate">Predicting the next Nobel Laureate in Physics.</td>
+<td class="p-4 font-label-md text-label-md">845</td>
+<td class="p-4 text-right flex justify-end gap-2">
+<button class="p-2 text-primary hover:bg-primary-fixed rounded transition-colors" title="Resolve">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</button>
+<button class="p-2 text-error hover:bg-error-container rounded transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Section 3: Predictor Status -->
+<section aria-labelledby="predictor-heading" class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="mb-6 flex justify-between items-start">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface" id="predictor-heading">Expert Classifier Status</h3>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Real-time model evolution and confidence scoring.</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm uppercase tracking-wider border border-[#bbf7d0]">
+<span class="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
+                            Online
+                        </span>
+</div>
+<!-- Simulated Technical Visualization area -->
+<div class="flex-1 bg-surface-container border border-outline-variant rounded-lg p-4 relative overflow-hidden min-h-[300px] flex items-center justify-center">
+<!-- Abstract grid background representing data processing -->
+<div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(#1f407a 1px, transparent 1px), linear-gradient(90deg, #1f407a 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="relative z-10 w-full max-w-md space-y-4">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface">
+<span>Model Confidence</span>
+<span>92.1%</span>
+</div>
+<div class="w-full bg-surface-variant h-1 rounded-full">
+<div class="bg-primary h-full rounded-full" style="width: 92.1%"></div>
+</div>
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface mt-4">
+<span>Epoch Processing</span>
+<span>45/50</span>
+</div>
+<div class="w-full bg-surface-variant h-1 rounded-full">
+<div class="bg-secondary h-full rounded-full" style="width: 90%"></div>
+</div>
+<div class="mt-8 text-center">
+<span class="font-label-md text-label-md text-on-surface-variant">Continuous Learning Active</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.02)]">
+<h4 class="font-headline-md text-headline-md text-on-surface mb-6">Metrics</h4>
+<ul class="space-y-4 font-label-md text-label-md">
+<li class="flex justify-between items-center py-2 border-b border-outline-variant border-dashed">
+<span class="text-on-surface-variant">F1 Score</span>
+<span class="text-on-surface font-bold">0.89</span>
+</li>
+<li class="flex justify-between items-center py-2 border-b border-outline-variant border-dashed">
+<span class="text-on-surface-variant">Precision</span>
+<span class="text-on-surface font-bold">0.91</span>
+</li>
+<li class="flex justify-between items-center py-2 border-b border-outline-variant border-dashed">
+<span class="text-on-surface-variant">Recall</span>
+<span class="text-on-surface font-bold">0.87</span>
+</li>
+<li class="flex justify-between items-center py-2 border-b border-outline-variant border-dashed">
+<span class="text-on-surface-variant">Loss (BCE)</span>
+<span class="text-on-surface font-bold">0.24</span>
+</li>
+<li class="flex justify-between items-center py-2 pt-4">
+<span class="text-on-surface-variant">Last Trained</span>
+<span class="text-on-surface">2 mins ago</span>
+</li>
+</ul>
+</div>
+</section>
+</div>
+</main>
+</body></html>

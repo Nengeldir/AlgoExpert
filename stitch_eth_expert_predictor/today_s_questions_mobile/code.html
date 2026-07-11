@@ -1,0 +1,220 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ETH Expert Vote - Today's Questions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#3b4663",
+                        "inverse-primary": "#aec6ff",
+                        "secondary-container": "#b9cffd",
+                        "tertiary-container": "#36415e",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#303030",
+                        "on-surface-variant": "#434750",
+                        "primary-fixed-dim": "#aec6ff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface-container-low": "#f6f3f2",
+                        "surface-container-high": "#eae7e7",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed": "#0f1b35",
+                        "on-secondary": "#ffffff",
+                        "surface-tint": "#3f5d99",
+                        "background": "#fcf9f8",
+                        "secondary": "#495f86",
+                        "primary": "#002961",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-fixed-dim": "#b1c7f4",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#c4c6d1",
+                        "on-background": "#1b1c1c",
+                        "on-tertiary-container": "#a2adcf",
+                        "surface": "#fcf9f8",
+                        "surface-container-highest": "#e5e2e1",
+                        "outline": "#747781",
+                        "on-secondary-fixed-variant": "#30476d",
+                        "tertiary-fixed": "#dae2ff",
+                        "on-secondary-fixed": "#001b3e",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#d7e3ff",
+                        "on-primary-fixed-variant": "#254580",
+                        "primary-container": "#1f407a",
+                        "on-surface": "#1b1c1c",
+                        "on-secondary-container": "#42587f",
+                        "surface-variant": "#e5e2e1",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#f0eded",
+                        "on-primary-container": "#90adef",
+                        "tertiary": "#202b46",
+                        "surface-bright": "#fcf9f8",
+                        "tertiary-fixed-dim": "#bbc6e9",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-fixed": "#001a42"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased pb-24">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface-dim w-full sticky top-0 z-50 border-b border-outline-variant dark:border-outline flex items-center justify-between px-margin-mobile h-16 w-full">
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed font-bold">ETH Expert Vote</h1>
+<button class="text-primary dark:text-primary-fixed hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<main class="p-margin-mobile flex flex-col space-y-6">
+<!-- Video Comparison Question -->
+<section class="flex flex-col space-y-4">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">24-Hour View Accumulation</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Which video will amass more net views 24 hours after voting closes?</p>
+<div class="flex flex-col space-y-4">
+<!-- Option A -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<img class="w-full aspect-video object-cover" data-alt="A professional YouTube thumbnail showing a tech reviewer standing next to a whiteboard with complex sorting algorithm diagrams. Bright, clear, light-mode corporate tech aesthetic with ETH blue accents. High resolution, clear typography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjOqekxvKMo5vkyqJ4KoaxFaXMFlq_Un4k5U_-z2FD6XHXvbh7A1Jgb5INTtyt4QAbqvi-2iEn5I08dq4ZpHzXaW-JE7n2q47WpCZHandTIiwZPYvMZ0d3ANWZfeToCPP_6n1hCzOIqXvNi-Jqa2up6GiW43kP1U50Jk1RiM_Brjizwv4wLI8rDTKbyO35mNHToQrMIi8qN2IuK3PLa23a-FDbmIIP9N8SPv495qREGjXlSn-o2uKoIEh7nxEUHjPMHBNB55Ouo8n5">
+<div class="p-4 flex flex-col space-y-3">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">Tech Explained</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Sorting Algo Deep Dive</p>
+</div>
+<span class="font-label-sm text-label-sm text-outline">2 hrs ago</span>
+</div>
+<div class="flex items-center space-x-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="font-label-sm text-label-sm">1.2M Subscribers</span>
+</div>
+<button class="mt-2 w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded text-center transition-colors hover:opacity-90">Vote for Option A</button>
+</div>
+</div>
+<!-- Option B -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<img class="w-full aspect-video object-cover" data-alt="A minimalist YouTube thumbnail showing a computer screen displaying running Python code for a sorting algorithm. Clean, bright, academic aesthetic. Light-mode with precise details and high contrast. Professional and objective." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQO53I_CY4TyW_XrSRDBqfVdXqIoriFMASYeKCJYjSff8_mMym0NUsRKlxPw6KHf-XqkThqzgmmBmtlR4pzjMQ8u77zU8wA1mC4YR_Ohri7u92iPFAorfiOxpnh-mBEkRfQbTMETAaD5X5t7Z0TSazWDNt6PDhpFFcEwAX_Z3BUgBNk8bpA8bMlujhSTC3h3M51zZfMlSXTg5MVGbqFUu0pPyRSbZfCMPDk1sSzAnfoANLX75Cp0ZmhwXUyRkUmG9TKLGXsSe8Nh6L">
+<div class="p-4 flex flex-col space-y-3">
+<div class="flex items-start justify-between">
+<div>
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">Code Mastery</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">New Algo Implementation</p>
+</div>
+<span class="font-label-sm text-label-sm text-outline">5 hrs ago</span>
+</div>
+<div class="flex items-center space-x-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm" data-icon="group">group</span>
+<span class="font-label-sm text-label-sm">850K Subscribers</span>
+</div>
+<button class="mt-2 w-full border border-primary text-primary font-label-md text-label-md py-3 rounded text-center transition-colors hover:bg-surface-container-low">Vote for Option B</button>
+</div>
+</div>
+</div>
+</section>
+<hr class="border-t border-outline-variant my-4">
+<!-- SMI Market Prediction -->
+<section class="flex flex-col space-y-4">
+<div class="flex justify-between items-start">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Market Prediction</h2>
+<span class="bg-secondary-container text-on-secondary-container font-label-sm text-label-sm px-2 py-1 rounded">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">Will the Swiss Market Index (SMI) close higher than its opening value tomorrow?</p>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col space-y-4">
+<div class="flex justify-between items-end border-b border-outline-variant pb-2">
+<span class="font-label-md text-label-md text-on-surface">5-Day Trend</span>
+<span class="font-label-md text-label-md text-primary font-bold">11,245.30</span>
+</div>
+<!-- Chart Placeholder -->
+<div class="h-40 w-full relative">
+<img class="w-full h-full object-cover rounded" data-alt="A clean, minimalist 5-day financial line chart showing the Swiss Market Index. Light gray gridlines, precise ETH blue data line. High contrast, academic white background. No text, just clear data visualization indicating slight volatility but overall upward trend." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD87f3msufENfdyEWXuToorG4VqK-I3kuMRqbd8eepyt9fXdl2kyiaYA7Hbbk2fkcrkJ2kEMIpk2KzRsLSKYDpFkxMZV9ejkDccdIyokM3_iyB3vcCfg3EWXzf1NEKAjOJ_LVRwGwlwalQKz72q3kzg5C8xz6LLt3UM27Z03TBlqCqj1BizesPwY_ASjjfQ-1RpIMWkCDB8g1KrMawsDYCXpus5ul7kCDqK3gYai2-Pd2vEePji4ge4lGyp101ATa1ibMPb_6HDAvoi">
+</div>
+<div class="flex space-x-4 pt-2">
+<button class="flex-1 bg-surface-container-lowest border border-outline text-on-surface font-label-md text-label-md py-3 rounded flex items-center justify-center space-x-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-error" data-icon="close">close</span>
+<span class="">No</span>
+</button>
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-3 rounded flex items-center justify-center space-x-2 hover:opacity-90 transition-colors">
+<span class="material-symbols-outlined" data-icon="check">check</span>
+<span class="">Yes</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe bg-surface dark:bg-surface-dim border-t border-outline-variant dark:border-outline h-20 md:hidden">
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="today" data-weight="fill">today</span>
+<span class="font-label-sm text-label-sm mt-1">Today</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-surface-container-high rounded-full px-4 py-1 scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-surface-container-high rounded-full px-4 py-1 scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-surface-container-high rounded-full px-4 py-1 scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm mt-1">Admin</span>
+</button>
+</nav>
+
+
+</body></html>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- ETH Expert Vote — compass rose with checkmark -->
+  <g fill="#1f407a">
+    <!-- Cardinal points -->
+    <path d="M60 3 L70 42 L50 42 Z"/>
+    <path d="M60 117 L70 78 L50 78 Z"/>
+    <path d="M3 60 L42 70 L42 50 Z"/>
+    <path d="M117 60 L78 70 L78 50 Z"/>
+    <!-- Intercardinal points -->
+    <path d="M60 20 L67 38 L53 38 Z" transform="rotate(45 60 60)"/>
+    <path d="M60 20 L67 38 L53 38 Z" transform="rotate(135 60 60)"/>
+    <path d="M60 20 L67 38 L53 38 Z" transform="rotate(225 60 60)"/>
+    <path d="M60 20 L67 38 L53 38 Z" transform="rotate(315 60 60)"/>
+  </g>
+  <circle cx="60" cy="60" r="33" fill="none" stroke="#1f407a" stroke-width="10"/>
+  <circle cx="60" cy="60" r="25" fill="#ffffff"/>
+  <!-- Checkmark, breaking out of the ring to the upper right -->
+  <path d="M42 62 L57 77 L90 34" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="square"/>
+  <path d="M42 62 L57 77 L90 34" fill="none" stroke="#1f407a" stroke-width="12" stroke-linecap="square"/>
+</svg>

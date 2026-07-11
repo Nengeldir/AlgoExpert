@@ -1,0 +1,261 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ETH Expert Vote - Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary": "#495f86",
+                      "on-primary-fixed": "#001a42",
+                      "primary-fixed-dim": "#aec6ff",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-container": "#b9cffd",
+                      "tertiary-fixed-dim": "#bbc6e9",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#1f407a",
+                      "surface-container-lowest": "#ffffff",
+                      "on-error": "#ffffff",
+                      "outline-variant": "#c4c6d1",
+                      "inverse-primary": "#aec6ff",
+                      "secondary-fixed": "#d7e3ff",
+                      "surface-container": "#f0eded",
+                      "on-tertiary-container": "#a2adcf",
+                      "surface-container-high": "#eae7e7",
+                      "tertiary": "#202b46",
+                      "surface-bright": "#fcf9f8",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-container": "#42587f",
+                      "on-tertiary": "#ffffff",
+                      "outline": "#747781",
+                      "on-surface-variant": "#434750",
+                      "on-background": "#1b1c1c",
+                      "on-primary-container": "#90adef",
+                      "inverse-surface": "#303030",
+                      "on-primary-fixed-variant": "#254580",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#3f5d99",
+                      "tertiary-container": "#36415e",
+                      "on-secondary-fixed": "#001b3e",
+                      "tertiary-fixed": "#dae2ff",
+                      "background": "#fcf9f8",
+                      "on-tertiary-fixed-variant": "#3b4663",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed-variant": "#30476d",
+                      "inverse-on-surface": "#f3f0ef",
+                      "surface": "#fcf9f8",
+                      "on-surface": "#1b1c1c",
+                      "on-tertiary-fixed": "#0f1b35",
+                      "primary": "#002961",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e5e2e1",
+                      "secondary-fixed-dim": "#b1c7f4",
+                      "surface-dim": "#dcd9d9",
+                      "on-secondary": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "container-max": "1280px",
+                      "gutter": "24px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .eth-pattern {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex items-center justify-center relative overflow-hidden">
+<!-- Atmospheric Background Pattern -->
+<div class="absolute inset-0 eth-pattern opacity-50 z-0 pointer-events-none"></div>
+<!-- Abstract Geometric Accent -->
+<div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+<div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary-fixed-dim/30 blur-3xl opacity-60"></div>
+<div class="absolute bottom-[10%] right-[5%] w-[40%] h-[40%] rounded-full bg-secondary-fixed/40 blur-3xl opacity-50"></div>
+</div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 w-full max-w-md px-margin-mobile md:px-0">
+<!-- Authentication Card -->
+<div class="glass-panel border border-outline-variant rounded-xl shadow-lg flex flex-col overflow-hidden">
+<!-- Card Header -->
+<div class="bg-primary-container p-8 flex flex-col items-center justify-center border-b border-outline-variant relative overflow-hidden">
+<!-- Decorative subtle grid on header -->
+<div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+<div class="relative z-10 flex flex-col items-center gap-4">
+<!-- ETH Logo Placeholder -->
+<div class="w-16 h-16 bg-on-primary rounded flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: &quot;FILL&quot; 1; font-size: 32px;">account_balance</span>
+</div>
+<div class="text-center">
+<h1 class="font-headline-md text-headline-md text-on-primary mb-1">ETH Zurich</h1>
+<h2 class="font-label-md text-label-md text-primary-fixed-dim uppercase tracking-widest">Expert Vote</h2>
+</div>
+</div>
+</div>
+<!-- Card Body -->
+<div class="p-8 bg-surface-container-lowest">
+<!-- Tabs -->
+<div class="flex border-b border-outline-variant mb-8">
+<button class="flex-1 pb-3 text-center font-label-md text-label-md text-primary border-b-2 border-primary focus:outline-none transition-colors">
+                        Login
+                    </button>
+<button class="flex-1 pb-3 text-center font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors focus:outline-none">
+                        Sign-up
+                    </button>
+</div>
+<!-- Form -->
+<form class="flex flex-col gap-6" onsubmit="event.preventDefault();">
+<!-- Email Field -->
+<div class="flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface" for="email">ETH Email</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">mail</span>
+</div>
+<input class="w-full pl-10 pr-4 py-3 bg-surface-container-low border border-outline-variant rounded focus:border-primary focus:ring-2 focus:ring-primary/20 font-body-md text-on-surface transition-all outline-none" id="email" name="email" placeholder="username@ethz.ch" required="" type="email">
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface" for="password">Password</label>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">Forgot Password?</a>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-outline">lock</span>
+</div>
+<input class="w-full pl-10 pr-10 py-3 bg-surface-container-low border border-outline-variant rounded focus:border-primary focus:ring-2 focus:ring-primary/20 font-body-md text-on-surface transition-all outline-none" id="password" name="password" placeholder="••••••••" required="" type="password">
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-outline hover:text-on-surface transition-colors focus:outline-none" type="button">
+<span class="material-symbols-outlined">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- CTA Button -->
+<button class="w-full py-4 mt-2 bg-primary text-on-primary font-label-md text-label-md rounded flex justify-center items-center gap-2 hover:bg-primary-container transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface" type="submit">
+                        Enter Portal
+                        <span class="material-symbols-outlined" style="font-size: 18px;">arrow_forward</span>
+</button>
+</form>
+<!-- Secure Context Indicator -->
+<div class="mt-8 pt-6 border-t border-outline-variant flex items-center justify-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined" style="font-size: 16px;">verified_user</span>
+<span class="font-label-sm text-label-sm">Secure ETH Zurich Authentication</span>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

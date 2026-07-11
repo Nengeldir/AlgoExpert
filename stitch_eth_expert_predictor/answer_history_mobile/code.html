@@ -1,0 +1,326 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Performance History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed-variant": "#3b4663",
+                      "inverse-primary": "#aec6ff",
+                      "secondary-container": "#b9cffd",
+                      "tertiary-container": "#36415e",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#303030",
+                      "on-surface-variant": "#434750",
+                      "primary-fixed-dim": "#aec6ff",
+                      "inverse-on-surface": "#f3f0ef",
+                      "surface-container-low": "#f6f3f2",
+                      "surface-container-high": "#eae7e7",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#0f1b35",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#3f5d99",
+                      "background": "#fcf9f8",
+                      "secondary": "#495f86",
+                      "primary": "#002961",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-fixed-dim": "#b1c7f4",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#c4c6d1",
+                      "on-background": "#1b1c1c",
+                      "on-tertiary-container": "#a2adcf",
+                      "surface": "#fcf9f8",
+                      "surface-container-highest": "#e5e2e1",
+                      "outline": "#747781",
+                      "on-secondary-fixed-variant": "#30476d",
+                      "tertiary-fixed": "#dae2ff",
+                      "on-secondary-fixed": "#001b3e",
+                      "on-error": "#ffffff",
+                      "secondary-fixed": "#d7e3ff",
+                      "on-primary-fixed-variant": "#254580",
+                      "primary-container": "#1f407a",
+                      "on-surface": "#1b1c1c",
+                      "on-secondary-container": "#42587f",
+                      "surface-variant": "#e5e2e1",
+                      "error-container": "#ffdad6",
+                      "surface-container": "#f0eded",
+                      "on-primary-container": "#90adef",
+                      "tertiary": "#202b46",
+                      "surface-bright": "#fcf9f8",
+                      "tertiary-fixed-dim": "#bbc6e9",
+                      "surface-dim": "#dcd9d9",
+                      "on-primary-fixed": "#001a42"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1280px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        /* Hide scrollbar for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased md:hidden flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-50 border-b border-outline-variant bg-surface text-primary font-headline-md transition-colors duration-200 flex items-center justify-between px-margin-mobile h-16">
+<button class="p-2 hover:bg-surface-container-high active:opacity-80 rounded-full flex items-center justify-center text-on-surface-variant transition-colors duration-200">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary font-bold">ETH Expert Vote</h1>
+<button class="p-2 hover:bg-surface-container-high active:opacity-80 rounded-full flex items-center justify-center text-on-surface-variant transition-colors duration-200">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto pb-24 pt-4 px-margin-mobile">
+<!-- Screen Title -->
+<div class="mb-6">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Performance History</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Review your historical voting accuracy and weight.</p>
+</div>
+<!-- Horizontal Scrollable Stats -->
+<div class="flex overflow-x-auto space-x-4 no-scrollbar pb-4 mb-6 -mx-margin-mobile px-margin-mobile snap-x">
+<!-- Stat Card 1 -->
+<div class="min-w-[200px] flex-shrink-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 snap-start shadow-sm">
+<div class="flex items-center space-x-2 mb-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">how_to_vote</span>
+<span class="font-label-sm text-label-sm">Total Votes</span>
+</div>
+<div class="font-display-lg text-display-lg text-primary">142</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="min-w-[200px] flex-shrink-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 snap-start shadow-sm">
+<div class="flex items-center space-x-2 mb-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-label-sm text-label-sm">Accuracy Rate</span>
+</div>
+<div class="flex items-baseline space-x-2">
+<div class="font-display-lg text-display-lg text-primary">94.5<span class="text-headline-md">%</span></div>
+</div>
+<div class="font-label-sm text-label-sm text-[#008a00] mt-1">+2.1% from last month</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="min-w-[200px] flex-shrink-0 bg-surface-container-lowest border border-outline-variant rounded-xl p-4 snap-start shadow-sm">
+<div class="flex items-center space-x-2 mb-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">weight</span>
+<span class="font-label-sm text-label-sm">Expertise Weight</span>
+</div>
+<div class="flex items-baseline space-x-2">
+<div class="font-display-lg text-display-lg text-primary">4.2<span class="text-headline-md">x</span></div>
+</div>
+</div>
+</div>
+<!-- Filters Section -->
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent Decisions</h3>
+<button class="flex items-center space-x-1 border border-outline-variant rounded-full px-3 py-1 bg-surface-container-lowest text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+<span class="font-label-md text-label-md">Filter</span>
+</button>
+</div>
+<!-- Decision History List -->
+<div class="space-y-4"><!-- Oct 24 Group -->
+<div class="space-y-4">
+  <div class="font-label-md text-label-md text-on-surface-variant px-1">Oct 24, 2023</div>
+  <!-- YouTube Comparison Card -->
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col shadow-sm">
+    <div class="flex justify-between items-start mb-3">
+      <div class="font-label-sm text-label-sm text-on-surface-variant">YouTube Video Comparison</div>
+      <div class="bg-[#e6f4ea] text-[#137333] px-2 py-0.5 rounded border border-[#ceead6] font-label-sm text-label-sm flex items-center space-x-1">
+        <span class="material-symbols-outlined text-[14px]">verified</span>
+        <span class="">Correct</span>
+      </div>
+    </div>
+    <h4 class="font-body-md text-body-md font-semibold text-on-surface mb-2 leading-tight">Which video will have more views by EOD?</h4>
+    <div class="flex justify-between items-center mt-2 pt-3 border-t border-surface-container-highest">
+      <div class="flex flex-col">
+        <span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Your Prediction</span>
+        <span class="font-label-md text-label-md text-primary font-bold">Option A</span>
+      </div>
+      <div class="flex flex-col text-right">
+        <span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Actual Winner</span>
+        <span class="font-label-md text-label-md text-on-surface font-bold">Option A</span>
+      </div>
+    </div>
+  </div>
+  <!-- SMI Prediction Card -->
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex flex-col shadow-sm">
+    <div class="flex justify-between items-start mb-3">
+      <div class="font-label-sm text-label-sm text-on-surface-variant">SMI Market Prediction</div>
+      <div class="bg-[#fce8e6] text-[#c5221f] px-2 py-0.5 rounded border border-[#fad2cf] font-label-sm text-label-sm flex items-center space-x-1">
+        <span class="material-symbols-outlined text-[14px]">cancel</span>
+        <span class="">Incorrect</span>
+      </div>
+    </div>
+    <h4 class="font-body-md text-body-md font-semibold text-on-surface mb-2 leading-tight">Will the SMI index close higher or lower today?</h4>
+    <div class="flex justify-between items-center mt-2 pt-3 border-t border-surface-container-highest">
+      <div class="flex flex-col">
+        <span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Your Prediction</span>
+        <span class="font-label-md text-label-md text-primary font-bold">Higher</span>
+      </div>
+      <div class="flex flex-col text-right">
+        <span class="font-label-sm text-label-sm text-on-surface-variant mb-1">Actual Outcome</span>
+        <span class="font-label-md text-label-md text-on-surface font-bold">Lower</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+<div class="mt-6 flex justify-center">
+<button class="border border-primary text-primary font-label-md text-label-md py-2 px-6 rounded-lg hover:bg-primary-fixed transition-colors">
+                Load More History
+            </button>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe bg-surface h-20 border-t border-outline-variant">
+<!-- Tab 1 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 rounded-lg p-2 flex-1">
+<span class="material-symbols-outlined text-[24px] mb-1">today</span>
+<span class="font-label-sm text-label-sm">Today</span>
+</button>
+<!-- Tab 2 - Active -->
+<button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 scale-95 transition-transform duration-150 flex-1 mx-1">
+<span class="material-symbols-outlined fill text-[24px] mb-1">history</span>
+<span class="font-label-sm text-label-sm font-bold">History</span>
+</button>
+<!-- Tab 3 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 rounded-lg p-2 flex-1">
+<span class="material-symbols-outlined text-[24px] mb-1">settings</span>
+<span class="font-label-sm text-label-sm">Settings</span>
+</button>
+<!-- Tab 4 -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 rounded-lg p-2 flex-1">
+<span class="material-symbols-outlined text-[24px] mb-1">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm">Admin</span>
+</button>
+</nav>
+
+
+</body></html>

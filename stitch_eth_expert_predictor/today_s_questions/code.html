@@ -1,0 +1,258 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Today's Questions - ETH Vote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "secondary": "#495f86",
+                            "on-primary-fixed": "#001a42",
+                            "primary-fixed-dim": "#aec6ff",
+                            "primary-fixed": "#d8e2ff",
+                            "secondary-container": "#b9cffd",
+                            "tertiary-fixed-dim": "#bbc6e9",
+                            "surface-container-highest": "#e5e2e1",
+                            "on-primary": "#ffffff",
+                            "primary-container": "#1f407a",
+                            "surface-container-lowest": "#ffffff",
+                            "on-error": "#ffffff",
+                            "outline-variant": "#c4c6d1",
+                            "inverse-primary": "#aec6ff",
+                            "secondary-fixed": "#d7e3ff",
+                            "surface-container": "#f0eded",
+                            "on-tertiary-container": "#a2adcf",
+                            "surface-container-high": "#eae7e7",
+                            "tertiary": "#202b46",
+                            "surface-bright": "#fcf9f8",
+                            "surface-container-low": "#f6f3f2",
+                            "on-secondary-container": "#42587f",
+                            "on-tertiary": "#ffffff",
+                            "outline": "#747781",
+                            "on-surface-variant": "#434750",
+                            "on-background": "#1b1c1c",
+                            "on-primary-container": "#90adef",
+                            "inverse-surface": "#303030",
+                            "on-primary-fixed-variant": "#254580",
+                            "error-container": "#ffdad6",
+                            "surface-tint": "#3f5d99",
+                            "tertiary-container": "#36415e",
+                            "on-secondary-fixed": "#001b3e",
+                            "tertiary-fixed": "#dae2ff",
+                            "background": "#fcf9f8",
+                            "on-tertiary-fixed-variant": "#3b4663",
+                            "error": "#ba1a1a",
+                            "on-secondary-fixed-variant": "#30476d",
+                            "inverse-on-surface": "#f3f0ef",
+                            "surface": "#fcf9f8",
+                            "on-surface": "#1b1c1c",
+                            "on-tertiary-fixed": "#0f1b35",
+                            "primary": "#002961",
+                            "on-error-container": "#93000a",
+                            "surface-variant": "#e5e2e1",
+                            "secondary-fixed-dim": "#b1c7f4",
+                            "surface-dim": "#dcd9d9",
+                            "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.125rem",
+                            "lg": "0.25rem",
+                            "xl": "0.5rem",
+                            "full": "0.75rem"
+                    },
+                    "spacing": {
+                            "unit": "4px",
+                            "container-max": "1280px",
+                            "gutter": "24px",
+                            "margin-mobile": "16px",
+                            "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                            "display-lg": ["Inter"],
+                            "body-lg": ["Inter"],
+                            "headline-lg-mobile": ["Inter"],
+                            "headline-lg": ["Inter"],
+                            "body-md": ["Inter"],
+                            "headline-md": ["Inter"],
+                            "label-md": ["JetBrains Mono"],
+                            "label-sm": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                            "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                            "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                            "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- Side Navigation -->
+<nav class="hidden md:flex flex-col p-gutter gap-4 bg-surface-container-low border-r border-outline-variant h-screen w-64 fixed left-0 top-0">
+<div class="mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Student Portal</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">ETH Zurich</p>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li class="">
+<a class="flex items-center gap-3 p-3 bg-secondary-container text-on-secondary-container font-bold rounded-lg cursor-pointer transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">today</span>
+<span class="font-label-md text-label-md">Today's Questions</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md text-label-md">Answer History</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+<li class="">
+<a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer duration-200 rounded-lg" href="#">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span class="font-label-md text-label-md">Admin View</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto">
+<button class="w-full py-2 px-4 border border-outline text-on-surface-variant font-label-md text-label-md rounded hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">logout</span> Logout
+            </button>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-margin-mobile md:p-margin-desktop bg-surface min-h-screen">
+<div class="max-w-container-max mx-auto space-y-12">
+<!-- Header Section -->
+<header class="border-b border-outline-variant pb-6">
+<h2 class="font-display-lg text-display-lg text-primary mb-2 hidden md:block">Today's Expert Assessment</h2>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-2 md:hidden">Today's Expert Assessment</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">Welcome back. Please review the following content and market indicators carefully before casting your vote. Your insights contribute directly to the ongoing departmental research.</p>
+</header>
+<!-- Section 1: YouTube Comparison -->
+<section class="bg-surface-container-lowest border border-outline-variant p-8 rounded-xl shadow-sm relative overflow-hidden">
+<div class="mb-6 flex items-center justify-between">
+<h3 class="font-headline-lg text-headline-lg text-on-background">24-Hour View Accumulation</h3>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm rounded uppercase tracking-wider">Time To closure: 12:00</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-6 max-w-2xl">Which video will amass more net views 24 hours after voting closes?</h4>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Option A -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors flex flex-col group relative">
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none z-10"></div>
+<div class="bg-cover bg-center w-full aspect-video border-b border-outline-variant" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBe2qnVo1Fmq_2UoLQ1RNJefZek48gnmsIgsNIBAMGEHztldO4yURdGabndmmFFhGX0jPXCe3P4JW2QuzKxYODV1lWzZRzUdXc6Du0C16-YQb_zuAfLZpBLpoDtWN3H6veMVUB3oRR1CF85wYPh7Ir60jWxlU5vMOTPovVi7mPw3jMwHloVdrHACT7MduIOjzqH6DiO1Aqeq3eXxo6erHUGrEBKQh7r1v1lpPtB2i5vvfGtxZUxr1udcfVasAbC-5WfLtzmRM_aCgPB&quot;);"></div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex items-center gap-3 mb-4">
+<div class="bg-cover bg-center w-10 h-10 rounded-full border border-outline-variant" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuBJqWcb222LdgavapEhIlBlCCFrQ5W-8wrbUUuGYTZ5ilp6LKTLgUYzOMeRC4RnolDGuPZsHwILTI68CRrKv-Dw226asvKSJQxpo4vEkXrA037qqDoSVmySRq6sKA8iUgoUsfzHB32vXiPm7uKbsFw3lDtQvXebZRy6ioWY5V-QRS6pPM3LT_uRsWQMsnXGHDd01hsMlXqhWeI7LH9HWsfvBIPOT-xP7MPSEXnYi3bClz87XcVWnaqX1kTuyyQx9SwkHPpGXVKUBxK_&quot;);"></div>
+<div>
+<p class="font-label-md text-label-md text-on-background">Quantum Mechanics Institute</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">1.2M Subscribers • Uploaded 2 hrs ago</p>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-4">Advanced Applications of Qubits in Cryptography</h4>
+<div class="mt-auto pt-6">
+<button class="w-full bg-surface-container text-primary border border-outline-variant py-3 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary transition-all duration-300">
+<span class="material-symbols-outlined">thumb_up</span> Vote for Option A
+</button>
+</div>
+</div>
+</div>
+<!-- Option B -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden hover:border-primary transition-colors flex flex-col group relative">
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors pointer-events-none z-10"></div>
+<div class="bg-cover bg-center w-full aspect-video border-b border-outline-variant" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCzANnW6ABYH0GiNPquqJMuKsf0rs6Zy3vBT7B2QAXH4MCITTUvSy78YtRXhIdyzSY3SZGz525FWXONuECH7cbVZH1jC-N2kCdVsEP9PcBOQxnGzO4IFnJPnPGIDgiuxrVsi7GcMmJAG5Rp1sCcPYoLaa-51VFBSAmDG8jni1-MUtTSw92YQV-RzclHRWNP9HCgpkqjrjSJ4sLe75CNELuIfSEWVGmBGRCiA6zv0bF9Dyob2FzpUEqhEIgzpJikB9XwNbaB0VAexfqP&quot;);"></div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex items-center gap-3 mb-4">
+<div class="bg-cover bg-center w-10 h-10 rounded-full border border-outline-variant" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuAI0frLhgG6LXolPDxjr6GF4VTwEUMrl86dfTRqR_5QZZ4supFhUm8JpYDETx7w6JGSxc__r-zFpiEn8nPenU1-18a-j0GDfR1KqXArjYbIFep8B82q8Y4mCwMQB4wQvM8QrTR2hxqRfvAb2_DFMvNxfc-YKseXhSqV6SvKN6tVGa7B_93iv9eblS715Ot6xpQMZUIz0aQ098mjpx0zqQe1RS_Qv4vG2PDpbu65q0ecLxZHnENVBX2febRfLVbov9FxpBM8qezjbwg-&quot;);"></div>
+<div>
+<p class="font-label-md text-label-md text-on-background">TechExplained Daily</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">850K Subscribers • Uploaded 5 hrs ago</p>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-4">Quantum Cryptography: The End of Encryption?</h4>
+<div class="mt-auto pt-6">
+<button class="w-full bg-surface-container text-primary border border-outline-variant py-3 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary transition-all duration-300">
+<span class="material-symbols-outlined">thumb_up</span> Vote for Option B
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: SMI Question -->
+<section>
+<div class="mb-6 flex items-center justify-between">
+<h3 class="font-headline-lg text-headline-lg text-on-background">Market Prediction</h3>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm rounded uppercase tracking-wider">Time To closure: 12:00</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-8 rounded-xl shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-outline-variant" style="font-size: 32px;">monitoring</span>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-background mb-6 max-w-2xl">Will the Swiss Market Index (SMI) close higher tomorrow than its current valuation?</h4>
+<!-- Chart Placeholder Layout -->
+<div class="h-64 border border-outline-variant rounded mb-8 bg-surface-container flex flex-col relative overflow-hidden">
+<!-- Simulated Chart Grid -->
+<div class="absolute inset-0 flex flex-col justify-between pointer-events-none px-4 py-2">
+<div class="border-b border-outline-variant opacity-30 w-full h-1/4"></div>
+<div class="border-b border-outline-variant opacity-30 w-full h-1/4"></div>
+<div class="border-b border-outline-variant opacity-30 w-full h-1/4"></div>
+<div class="w-full h-1/4"></div>
+</div>
+<div class="absolute inset-0 flex justify-between pointer-events-none px-12 py-2">
+<div class="border-l border-outline-variant opacity-30 h-full w-1/5"></div>
+<div class="border-l border-outline-variant opacity-30 h-full w-1/5"></div>
+<div class="border-l border-outline-variant opacity-30 h-full w-1/5"></div>
+<div class="border-l border-outline-variant opacity-30 h-full w-1/5"></div>
+</div>
+<!-- Simulated SVG Line -->
+<div class="flex-grow relative z-10 flex items-center justify-center">
+<svg class="w-full h-full text-primary" preserveAspectRatio="none" viewBox="0 0 1000 200">
+<path d="M0 150 L200 120 L400 140 L600 80 L800 100 L1000 50" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<circle cx="1000" cy="50" fill="currentColor" r="4"></circle>
+</svg>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between px-4 pb-2 pt-1 border-t border-outline-variant font-label-sm text-label-sm text-on-surface-variant bg-surface-container-low z-20">
+<span class="">T-5</span>
+<span class="">T-4</span>
+<span class="">T-3</span>
+<span class="">T-2</span>
+<span class="">Today</span>
+</div>
+</div>
+<!-- Voting Actions -->
+<div class="flex gap-4">
+<button class="flex-1 bg-surface-container border border-outline-variant py-4 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-[#15803d] hover:text-white hover:border-[#15803d] transition-all duration-300">
+<span class="material-symbols-outlined">trending_up</span> Yes, it will rise
+                        </button>
+<button class="flex-1 bg-surface-container border border-outline-variant py-4 font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-error hover:text-on-error hover:border-error transition-all duration-300">
+<span class="material-symbols-outlined">trending_down</span> No, it will fall
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+
+
+
+
+</body></html>

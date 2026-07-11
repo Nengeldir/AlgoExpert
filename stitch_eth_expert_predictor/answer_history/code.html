@@ -1,0 +1,249 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Answer History - ETH Expert Vote</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<!-- Tailwind Config & Script -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#495f86",
+                        "on-primary-fixed": "#001a42",
+                        "primary-fixed-dim": "#aec6ff",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary-container": "#b9cffd",
+                        "tertiary-fixed-dim": "#bbc6e9",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#1f407a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c4c6d1",
+                        "inverse-primary": "#aec6ff",
+                        "secondary-fixed": "#d7e3ff",
+                        "surface-container": "#f0eded",
+                        "on-tertiary-container": "#a2adcf",
+                        "surface-container-high": "#eae7e7",
+                        "tertiary": "#202b46",
+                        "surface-bright": "#fcf9f8",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-container": "#42587f",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#747781",
+                        "on-surface-variant": "#434750",
+                        "on-background": "#1b1c1c",
+                        "on-primary-container": "#90adef",
+                        "inverse-surface": "#303030",
+                        "on-primary-fixed-variant": "#254580",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#3f5d99",
+                        "tertiary-container": "#36415e",
+                        "on-secondary-fixed": "#001b3e",
+                        "tertiary-fixed": "#dae2ff",
+                        "background": "#fcf9f8",
+                        "on-tertiary-fixed-variant": "#3b4663",
+                        "error": "#ba1a1a",
+                        "on-secondary-fixed-variant": "#30476d",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface": "#fcf9f8",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed": "#0f1b35",
+                        "primary": "#002961",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e5e2e1",
+                        "secondary-fixed-dim": "#b1c7f4",
+                        "surface-dim": "#dcd9d9",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "headline-md": ["Inter", "sans-serif"],
+                        "label-md": ["JetBrains Mono", "monospace"],
+                        "label-sm": ["JetBrains Mono", "monospace"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen flex flex-col md:flex-row text-on-background font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Mobile TopNavBar -->
+<nav class="md:hidden bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline w-full flex flex-col top-0 z-50 sticky">
+<div class="flex justify-between items-center w-full px-margin-mobile h-16">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim tracking-tight">ETH Vote</span>
+<button class="text-primary p-2 focus:outline-none focus:ring-2 focus:ring-primary rounded">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+<div class="w-full flex overflow-x-auto hide-scrollbar border-t border-surface-variant bg-surface-container-lowest">
+<!-- Inactive -->
+<a class="flex-shrink-0 px-4 py-3 font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer whitespace-nowrap" href="#">Today's Questions</a>
+<!-- Active -->
+<a class="flex-shrink-0 px-4 py-3 font-body-md text-body-md text-primary dark:text-primary-fixed border-b-2 border-primary dark:border-primary-fixed pb-1 hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer whitespace-nowrap" href="#">Answer History</a>
+<!-- Inactive -->
+<a class="flex-shrink-0 px-4 py-3 font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer whitespace-nowrap" href="#">Settings</a>
+<!-- Inactive -->
+<a class="flex-shrink-0 px-4 py-3 font-body-md text-body-md text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors cursor-pointer whitespace-nowrap" href="#">Admin View</a>
+</div>
+</nav>
+<!-- Desktop SideNavBar -->
+<nav class="hidden md:flex flex-col p-gutter gap-4 bg-surface-container-low dark:bg-tertiary-container h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline z-40">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold font-label-md">
+                EU
+            </div>
+<div>
+<h2 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim leading-tight">Student Portal</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">ETH Zurich</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 flex-1">
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-tertiary transition-colors cursor-pointer rounded-lg active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="today">today</span>
+                Today's Questions
+            </a>
+<!-- Active -->
+<a class="flex items-center gap-3 px-4 py-3 font-label-md text-label-md bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary font-bold rounded-lg transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="history" style="font-variation-settings: &quot;FILL&quot; 1;">history</span>
+                Answer History
+            </a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-tertiary transition-colors cursor-pointer rounded-lg active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-highest dark:hover:bg-tertiary transition-colors cursor-pointer rounded-lg active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+                Admin View
+            </a>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-4">
+<a class="flex items-center gap-3 px-4 py-2 font-label-md text-label-md text-error hover:bg-error-container hover:text-on-error-container transition-colors cursor-pointer rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Logout
+            </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 w-full bg-surface">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12">
+<!-- Page Header -->
+<header class="mb-10">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Performance History</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+                    A comprehensive log of your past classifications. Your accuracy directly influences your standing within the expert consensus network.
+                </p>
+</header>
+<!-- Top Summary Cards (Bento style) -->
+<div class="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2">
+<!-- Total Votes Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-primary transition-colors duration-300">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-primary text-6xl" data-icon="how_to_vote">how_to_vote</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant mb-4 z-10 block">Total Votes Submitted</span>
+<div class="flex items-baseline gap-2 z-10">
+<span class="font-display-lg text-display-lg text-on-surface tracking-tight">342</span>
+</div>
+</div>
+<!-- Accuracy Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-primary transition-colors duration-300">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-primary text-6xl" data-icon="troubleshoot">troubleshoot</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant mb-4 z-10 block">Lifetime Accuracy</span>
+<div class="flex items-baseline gap-2 z-10">
+<span class="font-display-lg text-display-lg text-primary tracking-tight">89.4</span>
+<span class="font-headline-md text-headline-md text-primary-container">%</span>
+</div>
+<div class="mt-4 h-1 w-full bg-surface-variant rounded-full overflow-hidden z-10">
+<div class="h-full bg-primary" style="width: 89.4%;"></div>
+</div>
+</div>
+<!-- Classifier Weight Card -->
+
+</div>
+<!-- History List Section -->
+<section class="flex flex-col gap-4">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-headline-md text-headline-md text-on-surface">Recent Decisions</h2>
+<button class="flex items-center gap-2 font-label-md text-label-md text-primary hover:text-primary-container transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded px-2 py-1">
+<span class="material-symbols-outlined text-lg" data-icon="filter_list">filter_list</span>
+                        Filter Log
+                    </button>
+</div>
+<!-- Data Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant"><tr class=""><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold whitespace-nowrap">Date</th><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold">Type</th><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold w-1/3">Subject / Query</th><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold">Your Assertion</th><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold">Correct Answer</th><th class="py-4 px-6 font-label-md text-label-md text-on-surface-variant font-bold text-right">Status</th></tr></thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant"><tr class="hover:bg-surface-bright transition-colors duration-150"><td class="py-4 px-6 text-on-surface-variant font-label-sm text-label-sm">2023-10-24</td><td class="py-4 px-6"><span class="material-symbols-outlined text-primary" title="Market Prediction">trending_up</span></td><td class="py-4 px-6 font-medium text-primary-container">SMI Index: Will the closing price exceed 11,450 by EOD?</td><td class="py-4 px-6">Yes</td><td class="py-4 px-6 text-on-surface-variant">Yes</td><td class="py-4 px-6 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-primary-fixed-dim bg-surface text-primary-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>Correct</span></td></tr><tr class="hover:bg-surface-bright transition-colors duration-150"><td class="py-4 px-6 text-on-surface-variant font-label-sm text-label-sm">2023-10-23</td><td class="py-4 px-6"><span class="material-symbols-outlined text-primary" title="24-Hour View Accumulation">smart_display</span></td><td class="py-4 px-6 font-medium text-primary-container">Video A vs Video B: Which will have higher 24h view velocity?</td><td class="py-4 px-6">Video A</td><td class="py-4 px-6 text-on-surface-variant">Video B</td><td class="py-4 px-6 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-error bg-error-container text-on-error-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Incorrect</span></td></tr><tr class="hover:bg-surface-bright transition-colors duration-150"><td class="py-4 px-6 text-on-surface-variant font-label-sm text-label-sm">2023-10-22</td><td class="py-4 px-6"><span class="material-symbols-outlined text-primary" title="Market Prediction">trending_up</span></td><td class="py-4 px-6 font-medium text-primary-container">SMI: Expected volatility spike &gt; 1.5% following SNB announcement?</td><td class="py-4 px-6">No</td><td class="py-4 px-6 text-on-surface-variant">No</td><td class="py-4 px-6 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-primary-fixed-dim bg-surface text-primary-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>Correct</span></td></tr><tr class="hover:bg-surface-bright transition-colors duration-150"><td class="py-4 px-6 text-on-surface-variant font-label-sm text-label-sm">2023-10-21</td><td class="py-4 px-6"><span class="material-symbols-outlined text-primary" title="24-Hour View Accumulation">smart_display</span></td><td class="py-4 px-6 font-medium text-primary-container">YouTube: Will 'Tech Review X' reach 1M views within 24 hours?</td><td class="py-4 px-6">Yes</td><td class="py-4 px-6 text-on-surface-variant">Pending</td><td class="py-4 px-6 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-outline-variant bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>Pending</span></td></tr><tr class="hover:bg-surface-bright transition-colors duration-150"><td class="py-4 px-6 text-on-surface-variant font-label-sm text-label-sm">2023-10-20</td><td class="py-4 px-6"><span class="material-symbols-outlined text-primary" title="Market Prediction">trending_up</span></td><td class="py-4 px-6 font-medium text-primary-container">SMI: Will Nestle (NESN) outperform the index today?</td><td class="py-4 px-6">Yes</td><td class="py-4 px-6 text-on-surface-variant">No</td><td class="py-4 px-6 text-right"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-error bg-error-container text-on-error-container font-label-sm text-label-sm"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Incorrect</span></td></tr></tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="bg-surface-container-low border-t border-outline-variant px-6 py-4 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 1 to 5 of 342 entries</span>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 border border-outline-variant rounded text-on-surface-variant hover:bg-surface-container-highest disabled:opacity-50 font-label-sm text-label-sm transition-colors" disabled="">Previous</button>
+<button class="px-3 py-1.5 border border-outline-variant rounded text-primary hover:bg-surface-container-highest hover:text-primary-container font-label-sm text-label-sm transition-colors">Next</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+
+
+</body></html>

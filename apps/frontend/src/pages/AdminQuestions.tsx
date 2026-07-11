@@ -311,10 +311,14 @@ export default function AdminQuestions() {
 
   return (
     <div className="page">
+      <header className="page-header">
+        <h1 className="page-title">Admin Dashboard</h1>
+        <p className="page-subtitle">System overview and control center for ETH Expert Vote.</p>
+      </header>
       <div className="admin-toolbar">
-        <h1 className="page-title" style={{ marginBottom: 0 }}>
-          Admin — Questions
-        </h1>
+        <h2 className="section-title" style={{ marginBottom: 0 }}>
+          Question Control
+        </h2>
         <div className="admin-toolbar__actions">
           <button
             className="btn btn--sm"

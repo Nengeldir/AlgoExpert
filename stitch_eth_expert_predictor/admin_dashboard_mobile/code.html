@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard - ETH Expert Vote</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-fixed-variant": "#3b4663",
+                      "inverse-primary": "#aec6ff",
+                      "secondary-container": "#b9cffd",
+                      "tertiary-container": "#36415e",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#303030",
+                      "on-surface-variant": "#434750",
+                      "primary-fixed-dim": "#aec6ff",
+                      "inverse-on-surface": "#f3f0ef",
+                      "surface-container-low": "#f6f3f2",
+                      "surface-container-high": "#eae7e7",
+                      "error": "#ba1a1a",
+                      "on-tertiary-fixed": "#0f1b35",
+                      "on-secondary": "#ffffff",
+                      "surface-tint": "#3f5d99",
+                      "background": "#fcf9f8",
+                      "secondary": "#495f86",
+                      "primary": "#002961",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-fixed-dim": "#b1c7f4",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "outline-variant": "#c4c6d1",
+                      "on-background": "#1b1c1c",
+                      "on-tertiary-container": "#a2adcf",
+                      "surface": "#fcf9f8",
+                      "surface-container-highest": "#e5e2e1",
+                      "outline": "#747781",
+                      "on-secondary-fixed-variant": "#30476d",
+                      "tertiary-fixed": "#dae2ff",
+                      "on-secondary-fixed": "#001b3e",
+                      "on-error": "#ffffff",
+                      "secondary-fixed": "#d7e3ff",
+                      "on-primary-fixed-variant": "#254580",
+                      "primary-container": "#1f407a",
+                      "on-surface": "#1b1c1c",
+                      "on-secondary-container": "#42587f",
+                      "surface-variant": "#e5e2e1",
+                      "error-container": "#ffdad6",
+                      "surface-container": "#f0eded",
+                      "on-primary-container": "#90adef",
+                      "tertiary": "#202b46",
+                      "surface-bright": "#fcf9f8",
+                      "tertiary-fixed-dim": "#bbc6e9",
+                      "surface-dim": "#dcd9d9",
+                      "on-primary-fixed": "#001a42"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1280px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 z-50 bg-surface border-b border-outline-variant flat no shadows transition-colors duration-200 active:opacity-80 flex items-center justify-between px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<span class="material-symbols-outlined text-on-surface-variant">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary font-bold tracking-tight">ETH Expert Vote</h1>
+</div>
+<button class="p-2 -mr-2 rounded-full hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+<span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+</button>
+</header>
+<main class="w-full px-margin-mobile py-6 flex flex-col gap-6">
+<!-- Summary Metrics Grid -->
+<section aria-labelledby="metrics-heading" class="flex flex-col gap-4">
+<h2 class="sr-only" id="metrics-heading">System Metrics Overview</h2>
+<div class="grid grid-cols-2 gap-4">
+<!-- Total Users Metric -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="font-label-md text-label-md">Total Users</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">1,248</span>
+<span class="font-label-sm text-label-sm text-[theme(colors.primary)]">+12%</span>
+</div>
+</div>
+<!-- Total Votes Metric -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">how_to_vote</span>
+<span class="font-label-md text-label-md">Total Votes</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">8,932</span>
+<span class="font-label-sm text-label-sm text-[theme(colors.primary)]">+5%</span>
+</div>
+</div>
+</div>
+<!-- Global Accuracy Metric -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-3 relative overflow-hidden">
+<div class="absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-primary-fixed-dim/20 to-transparent pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span class="font-label-md text-label-md">Global Accuracy</span>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm">Excellent</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-on-surface tracking-tighter">94.2%</span>
+</div>
+<!-- Mini sparkline representation -->
+<div class="w-full h-8 mt-2 flex items-end gap-[2px]">
+<div class="w-full h-[60%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[75%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[70%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[85%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[90%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[88%] bg-surface-variant rounded-t-sm"></div>
+<div class="w-full h-[95%] bg-primary rounded-t-sm relative">
+<div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary ring-2 ring-surface-container-lowest"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Question Control Section -->
+<section aria-labelledby="question-control-heading" class="flex flex-col gap-4 mt-4">
+<div class="flex items-center justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface" id="question-control-heading">Question Control</h2>
+<div class="flex gap-2">
+<button aria-label="Export Questions" class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant text-primary hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 bg-surface-container-lowest">
+<span class="material-symbols-outlined">download</span>
+</button>
+<button aria-label="Add Question" class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 shadow-sm">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<!-- Question Cards List -->
+<div class="flex flex-col gap-3">
+<!-- Question Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-3 hover:border-primary transition-colors focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">QID-2023-A1</span>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Does implementing Proof-of-Stake significantly reduce the network's carbon footprint compared to Proof-of-Work?</h3>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded bg-[#dcfce7] text-[#166534] font-label-sm text-label-sm whitespace-nowrap">Active</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-3 border-t border-outline-variant">
+<div class="flex items-center gap-4 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1" title="Votes Cast">
+<span class="material-symbols-outlined text-[16px]">how_to_vote</span>
+<span>342</span>
+</div>
+<div class="flex items-center gap-1" title="Consensus">
+<span class="material-symbols-outlined text-[16px]">pie_chart</span>
+<span>88% Yes</span>
+</div>
+</div>
+<button aria-label="Edit Question QID-2023-A1" class="text-primary hover:text-primary-container font-label-md text-label-md flex items-center gap-1 focus:outline-none rounded px-1 -mx-1">
+                            Edit <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Question Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-3 hover:border-primary transition-colors focus-within:ring-2 focus-within:ring-primary focus-within:border-transparent">
+<div class="flex justify-between items-start gap-4">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">QID-2023-A2</span>
+<h3 class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Is Zero-Knowledge Rollups the most viable long-term solution for Ethereum scalability?</h3>
+</div>
+<span class="inline-flex items-center px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-sm text-label-sm whitespace-nowrap">Draft</span>
+</div>
+<div class="flex items-center justify-between mt-2 pt-3 border-t border-outline-variant">
+<div class="flex items-center gap-4 text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1" title="Votes Cast">
+<span class="material-symbols-outlined text-[16px]">how_to_vote</span>
+<span>0</span>
+</div>
+<div class="flex items-center gap-1" title="Consensus">
+<span class="material-symbols-outlined text-[16px]">pie_chart</span>
+<span>--</span>
+</div>
+</div>
+<button aria-label="Edit Question QID-2023-A2" class="text-primary hover:text-primary-container font-label-md text-label-md flex items-center gap-1 focus:outline-none rounded px-1 -mx-1">
+                            Edit <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<button class="w-full py-3 rounded-lg border border-outline-variant text-primary font-label-md text-label-md hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 bg-surface-container-lowest mt-2">
+                View All Questions
+            </button>
+</section>
+<!-- Expert Classifier Status -->
+<section aria-labelledby="classifier-heading" class="flex flex-col gap-4 mt-6">
+<h2 class="font-headline-md text-headline-md text-on-surface" id="classifier-heading">Expert Classifier Status</h2>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 flex flex-col gap-5 relative overflow-hidden">
+<!-- Status Header -->
+<div class="flex items-start justify-between z-10">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#16a34a] animate-pulse"></div>
+<span class="font-label-md text-label-md font-bold text-on-surface">Model Online</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">v2.4.1-eth</span>
+</div>
+<button aria-label="Classifier Settings" class="p-2 -mr-2 rounded-full hover:bg-surface-container-high transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 text-on-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<!-- Classifier Metrics Vertical List -->
+<div class="flex flex-col gap-4 z-10">
+<!-- Metric: Confidence Threshold -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">tune</span> Confidence Threshold</span>
+<span class="text-on-surface font-semibold">0.85</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Metric: Recent Classifications -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center font-label-sm text-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">history</span> Last 24h</span>
+<span class="text-on-surface font-semibold">142 Processed</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden flex">
+<div class="bg-[#16a34a] h-1.5" style="width: 78%" title="Verified"></div>
+<div class="bg-[#eab308] h-1.5" style="width: 15%" title="Flagged for Review"></div>
+<div class="bg-[#dc2626] h-1.5" style="width: 7%" title="Rejected"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav aria-label="Main Navigation" class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe bg-surface border-t border-outline-variant flat no shadows h-20">
+<a aria-label="Today" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">today</span>
+<span class="font-label-sm text-label-sm mt-1">Today</span>
+</a>
+<a aria-label="History" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">history</span>
+<span class="font-label-sm text-label-sm mt-1">History</span>
+</a>
+<a aria-label="Settings" class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest scale-95 transition-transform duration-150 p-2 rounded-lg" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-sm text-label-sm mt-1">Settings</span>
+</a>
+<a aria-current="page" aria-label="Admin" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 hover:bg-surface-container-highest scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+<span class="font-label-sm text-label-sm mt-1 font-bold">Admin</span>
+</a>
+</nav>
+</body></html>

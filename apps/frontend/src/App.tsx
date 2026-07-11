@@ -1,4 +1,12 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  NavLink,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom'
 import { isLoggedIn, clearToken, isAdminLoggedIn, clearAdminToken } from './api/client'
 import Register from './pages/Register'
 import Login from './pages/Login'
@@ -6,6 +14,7 @@ import Today from './pages/Today'
 import History from './pages/History'
 import AdminLogin from './pages/AdminLogin'
 import AdminQuestions from './pages/AdminQuestions'
+import Logo from './components/Logo'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/register" replace />
@@ -17,14 +26,40 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function Header() {
+export function Icon({ name, className }: { name: string; className?: string }) {
+  return (
+    <span
+      className={`material-symbols-outlined${className ? ` ${className}` : ''}`}
+      aria-hidden="true"
+    >
+      {name}
+    </span>
+  )
+}
+
+const NAV_ITEMS = [
+  { to: '/today', icon: 'today', label: "Today's Questions", shortLabel: 'Today' },
+  { to: '/history', icon: 'history', label: 'Answer History', shortLabel: 'History' },
+  {
+    to: '/admin/questions',
+    icon: 'admin_panel_settings',
+    label: 'Admin View',
+    shortLabel: 'Admin',
+  },
+]
+
+/* App shell: desktop sidebar + mobile top bar + mobile bottom nav.
+   Logout is always red and bottom-left; the bottom nav is a single shared
+   component so it is identical on every screen. */
+function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
-  const loggedIn = isLoggedIn()
+  const location = useLocation()
+  const userLoggedIn = isLoggedIn()
   const adminLoggedIn = isAdminLoggedIn()
 
   function handleLogout() {
     clearToken()
-    navigate('/register')
+    navigate('/login')
   }
 
   function handleAdminLogout() {
@@ -32,71 +67,121 @@ function Header() {
     navigate('/admin/login')
   }
 
+  // Mobile has a single logout tab — log out of the session that owns the
+  // current screen (admin session on /admin routes, user session elsewhere).
+  function handleContextualLogout() {
+    if (location.pathname.startsWith('/admin') && adminLoggedIn) {
+      handleAdminLogout()
+    } else {
+      handleLogout()
+    }
+  }
+
   return (
-    <header className="app-header">
-      <NavLink to="/" className="app-header__title">
-        Expert Algo
-      </NavLink>
-      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-        {loggedIn && (
-          <nav className="app-header__nav" aria-label="Main navigation">
-            <NavLink to="/today">Today</NavLink>
-            <NavLink to="/history">History</NavLink>
-            <button onClick={handleLogout}>Logout</button>
-          </nav>
-        )}
-        {adminLoggedIn && (
-          <nav className="app-header__nav" aria-label="Admin navigation">
-            <NavLink to="/admin/questions">Admin</NavLink>
-            <button onClick={handleAdminLogout}>Admin Logout</button>
-          </nav>
-        )}
-      </div>
-    </header>
+    <div className="app-shell">
+      <nav className="sidebar" aria-label="Main navigation">
+        <NavLink to="/" className="sidebar__brand">
+          <Logo className="sidebar__logo" />
+          <div>
+            <div className="sidebar__brand-title">ETH Expert Vote</div>
+            <div className="sidebar__brand-subtitle">ETH Zurich</div>
+          </div>
+        </NavLink>
+
+        <div className="sidebar__nav">
+          {NAV_ITEMS.map((item) => (
+            <NavLink key={item.to} to={item.to} className="sidebar__link">
+              <Icon name={item.icon} />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+
+        <div className="sidebar__footer">
+          {userLoggedIn && (
+            <button className="btn-logout" onClick={handleLogout}>
+              <Icon name="logout" />
+              Logout
+            </button>
+          )}
+          {adminLoggedIn && (
+            <button className="btn-logout" onClick={handleAdminLogout}>
+              <Icon name="logout" />
+              Admin Logout
+            </button>
+          )}
+        </div>
+      </nav>
+
+      <header className="mobile-topbar">
+        <Logo className="mobile-topbar__logo" />
+        <NavLink to="/" className="mobile-topbar__title">
+          ETH Expert Vote
+        </NavLink>
+      </header>
+
+      <main className="app-main">{children}</main>
+
+      <nav className="bottom-nav" aria-label="Main navigation">
+        <button
+          className="bottom-nav__tab bottom-nav__tab--logout"
+          onClick={handleContextualLogout}
+        >
+          <Icon name="logout" />
+          Logout
+        </button>
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} className="bottom-nav__tab">
+            <Icon name={item.icon} />
+            {item.shortLabel}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
   )
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Header />
-      <main>
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/today"
-            element={
-              <RequireAuth>
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/today"
+          element={
+            <RequireAuth>
+              <Layout>
                 <Today />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/history"
-            element={
-              <RequireAuth>
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <RequireAuth>
+              <Layout>
                 <History />
-              </RequireAuth>
-            }
-          />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route
-            path="/admin/questions"
-            element={
-              <RequireAdmin>
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin/questions"
+          element={
+            <RequireAdmin>
+              <Layout>
                 <AdminQuestions />
-              </RequireAdmin>
-            }
-          />
-          <Route path="/admin" element={<Navigate to="/admin/questions" replace />} />
-          <Route
-            path="/"
-            element={<Navigate to={isLoggedIn() ? '/today' : '/register'} replace />}
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+              </Layout>
+            </RequireAdmin>
+          }
+        />
+        <Route path="/admin" element={<Navigate to="/admin/questions" replace />} />
+        <Route path="/" element={<Navigate to={isLoggedIn() ? '/today' : '/register'} replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </BrowserRouter>
   )
 }

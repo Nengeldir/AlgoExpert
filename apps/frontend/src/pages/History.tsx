@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError, type HistoryItem } from '../api/client'
+import { Icon } from '../App'
 
 export default function History() {
   const [history, setHistory] = useState<HistoryItem[]>([])
@@ -24,9 +25,47 @@ export default function History() {
       </div>
     )
 
+  const totalVotes = history.filter((item) => item.user_vote !== null).length
+  const scored = history.filter((item) => item.is_resolved && item.user_vote !== null)
+  const correct = scored.filter((item) => item.is_correct === 1).length
+  const accuracy = scored.length > 0 ? Math.round((correct / scored.length) * 1000) / 10 : null
+
   return (
     <div className="page">
-      <h1 className="page-title">My Voting History</h1>
+      <header className="page-header">
+        <h1 className="page-title">Performance History</h1>
+        <p className="page-subtitle">
+          A comprehensive log of your past predictions. Your accuracy directly influences your
+          standing within the expert consensus network.
+        </p>
+      </header>
+
+      {history.length > 0 && (
+        <div className="stat-grid">
+          <div className="stat-card">
+            <Icon name="how_to_vote" className="stat-card__icon" />
+            <span className="stat-card__label">Total Votes Submitted</span>
+            <span className="stat-card__value">{totalVotes}</span>
+          </div>
+          <div className="stat-card">
+            <Icon name="troubleshoot" className="stat-card__icon" />
+            <span className="stat-card__label">Lifetime Accuracy</span>
+            {accuracy !== null ? (
+              <>
+                <span className="stat-card__value">
+                  {accuracy}
+                  <span className="stat-card__unit">%</span>
+                </span>
+                <div className="stat-card__track">
+                  <div className="stat-card__fill" style={{ width: `${accuracy}%` }} />
+                </div>
+              </>
+            ) : (
+              <span className="stat-card__value">—</span>
+            )}
+          </div>
+        </div>
+      )}
 
       {history.length === 0 && <div className="empty-state">No past questions yet.</div>}
 
@@ -43,7 +82,10 @@ function HistoryCard({ item }: { item: HistoryItem }) {
   return (
     <div className="card">
       <div className="question-meta">
-        <span>Closed: {deadline.toLocaleDateString()}</span>
+        <span className="chip">
+          <Icon name="event" className="icon--sm" />
+          Closed: {deadline.toLocaleDateString()}
+        </span>
         {item.is_resolved && item.user_vote !== null && (
           <span className={`badge ${item.is_correct ? 'badge--correct' : 'badge--wrong'}`}>
             {item.is_correct ? 'Correct' : 'Wrong'}

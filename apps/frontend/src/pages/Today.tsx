@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, ApiError, type Question } from '../api/client'
+import { Icon } from '../App'
 
 function formatViews(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
@@ -34,7 +35,13 @@ export default function Today() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Today</h1>
+      <header className="page-header">
+        <h1 className="page-title">Today's Expert Assessment</h1>
+        <p className="page-subtitle">
+          Welcome back. Please review the following questions carefully before casting your vote.
+          Your insights contribute directly to the ongoing departmental research.
+        </p>
+      </header>
 
       {questions.length === 0 && (
         <div className="empty-state">
@@ -99,7 +106,7 @@ function QuestionCard({
   const canVote = question.is_open && !question.user_vote && !question.is_resolved
 
   return (
-    <div className="card">
+    <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
       <div className="question-meta">
         {question.is_open && !question.is_resolved && (
           <span className="badge badge--open">Open</span>
@@ -117,7 +124,10 @@ function QuestionCard({
             )}
           </>
         )}
-        <span>Deadline: {deadline.toLocaleString()}</span>
+        <span className="chip">
+          <Icon name="schedule" className="icon--sm" />
+          Closes: {deadline.toLocaleString()}
+        </span>
       </div>
 
       <h2 className="question-title">{question.title}</h2>
@@ -129,7 +139,8 @@ function QuestionCard({
           alt="Question thumbnail"
           style={{
             width: '100%',
-            borderRadius: 'var(--radius)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--color-outline-variant)',
             marginBottom: 'var(--space-4)',
             maxHeight: '200px',
             objectFit: 'cover',
