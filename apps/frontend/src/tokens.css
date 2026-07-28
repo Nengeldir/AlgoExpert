@@ -1,6 +1,8 @@
 /* Design tokens — single source of truth for all visual values.
    Palette: "Polytechnic Precision" (stitch_eth_expert_predictor/polytechnic_precision/DESIGN.md) */
 :root {
+  color-scheme: light;
+
   /* Brand color palette — rooted in ETH Blue */
   --color-primary: #1f407a; /* primary-container / ETH Blue — key structural color */
   --color-primary-dark: #002961; /* M3 primary — deep navy */
@@ -9,6 +11,13 @@
   --color-primary-dim: #aec6ff; /* primary-fixed-dim */
   --color-secondary-container: #b9cffd;
   --color-on-secondary-container: #42587f;
+
+  /* Text/icon color for content placed directly on a solid --color-primary /
+     --color-error fill (e.g. .btn--primary, .btn--danger). Only needs a
+     token of its own because dark mode brightens those base colors for
+     on-surface legibility, which would otherwise break contrast on fills. */
+  --color-on-primary: #ffffff;
+  --color-on-error: #ffffff;
 
   --color-success: #166534;
   --color-success-strong: #15803d;
@@ -86,4 +95,42 @@
   --sidebar-width: 16rem;
   --bottom-nav-height: 5rem;
   --touch-target: 3rem; /* 48px minimum touch target */
+}
+
+/* Dark theme — same roles as :root, values only.
+   Applied via [data-theme="dark"] on <html>, set by src/theme.ts. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-primary: #8ab4f8;
+  --color-primary-dark: #d3e3fd; /* on-container text; also the hover-lighten target for .btn--primary */
+  --color-primary-hover: #aecbfa;
+  --color-primary-light: #274873; /* primary-container background */
+  --color-primary-dim: #3a5a8c; /* subtitle text sitting on a solid --color-primary fill */
+  --color-secondary-container: #33415f;
+  --color-on-secondary-container: #c8d7ff;
+
+  --color-on-primary: #0b2545;
+  --color-on-error: #4a0000;
+
+  --color-success: #7dd99a;
+  --color-success-strong: #4ade80;
+  --color-success-light: #16351f;
+  --color-success-border: #1f5233;
+  --color-error: #ffb4ab;
+  --color-error-light: #3a0c0c;
+  --color-on-error-container: #ff8a80;
+  --color-warning: #ffb877;
+  --color-warning-light: #3d2600;
+
+  --color-surface: #13161b;
+  --color-surface-container-lowest: #363d49; /* brightest — elevated "paper" cards */
+  --color-surface-container-low: #1a1e24;
+  --color-surface-container: #20242c;
+  --color-surface-container-high: #282e37;
+  --color-surface-container-highest: #313841;
+  --color-outline: #8b8fa3;
+  --color-outline-variant: #3a4048;
+  --color-on-surface: #e7e9ee;
+  --color-on-surface-variant: #b4b8c5;
 }

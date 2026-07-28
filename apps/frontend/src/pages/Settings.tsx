@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, ApiError, clearToken, type UserProfile } from '../api/client'
 import { Icon } from '../App'
+import { applyTheme, getStoredTheme, type Theme } from '../theme'
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -16,6 +17,13 @@ export default function Settings() {
 
   const [resetSending, setResetSending] = useState(false)
   const [resetMessage, setResetMessage] = useState<string | null>(null)
+
+  const [theme, setTheme] = useState<Theme>(getStoredTheme)
+
+  function handleThemeChange(next: Theme) {
+    applyTheme(next)
+    setTheme(next)
+  }
 
   useEffect(() => {
     api
@@ -149,14 +157,24 @@ export default function Settings() {
           Interface Theme
         </div>
         <div className="theme-grid">
-          <div className="theme-tile theme-tile--active">
+          <button
+            type="button"
+            className={`theme-tile${theme === 'light' ? ' theme-tile--active' : ''}`}
+            aria-pressed={theme === 'light'}
+            onClick={() => handleThemeChange('light')}
+          >
             <Icon name="light_mode" />
             Light
-          </div>
-          <div className="theme-tile theme-tile--disabled" title="Dark theme coming soon">
+          </button>
+          <button
+            type="button"
+            className={`theme-tile${theme === 'dark' ? ' theme-tile--active' : ''}`}
+            aria-pressed={theme === 'dark'}
+            onClick={() => handleThemeChange('dark')}
+          >
             <Icon name="dark_mode" />
             Dark
-          </div>
+          </button>
         </div>
       </section>
 
