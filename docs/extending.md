@@ -15,8 +15,12 @@ This document describes how to modify and extend the Expert Algorithm app for fu
 | Database schema               | `apps/backend/src/db/migrate.ts`                  |
 | Seed data                     | `apps/backend/src/db/seed.ts`                     |
 | API routes                    | `apps/backend/src/routes/`                        |
+| Daily schedule anchors        | `apps/backend/src/services/schedule.ts`           |
+| Automated question sources    | `apps/backend/src/services/{smiService,youtube,youtubeResolver}.ts` |
 | Design tokens (colors, fonts) | `apps/frontend/src/tokens.css`                    |
 | Frontend pages                | `apps/frontend/src/pages/`                        |
+| Operator handbook content     | `docs-site/content/*.md`                          |
+| Handbook navigation           | `docs-site/site.config.mjs`                       |
 
 ---
 
@@ -107,39 +111,50 @@ The service worker is already scaffolded at `apps/frontend/public/sw.js`.
 
 ---
 
-## How to Integrate YouTube API
+## How to Add a New Automated Question Source
 
-The `image_url` field on questions is prepared for thumbnail URLs.
+SMI and YouTube are both **already implemented** — read them before writing a third, since
+the shape is identical and worth copying rather than reinventing.
 
-1. **Automated**: Create a backend route `POST /admin/questions/from-youtube` that accepts a video ID, calls the YouTube Data API v3 (`videos.list?part=snippet`), extracts the thumbnail URL and title, and creates the question pre-populated.
+| Piece | SMI | YouTube |
+|-------|-----|---------|
+| Service (fetch + create + resolve) | `services/smiService.ts` | `services/youtube.ts`, `services/youtubeResolver.ts` |
+| Routes | `routes/smi.ts` | `routes/youtube.ts` |
+| Bookkeeping table | `smi_questions` | `youtube_suggestions` |
+| Cron endpoints | `/admin/smi/daily`, `/admin/smi/resolve` | `/admin/youtube/resolve` (a tick driving both ends) |
 
-2. **Manual**: When creating a question via `POST /admin/questions`, pass `image_url` as `https://img.youtube.com/vi/<VIDEO_ID>/hqdefault.jpg`.
+To add a source, follow the same four steps:
 
-3. **Future**: For video embedding on the voting page, add `video_id` as a separate column and render an `<iframe>` in `QuestionCard` when it is set.
+1. **A bookkeeping table** in `db/migrate.ts` keyed by date, holding whatever the resolver
+   will need later (a reference price, a baseline measurement) plus a nullable
+   `question_id` linking to the published question.
+2. **A service** exporting a create function and a resolve function, both taking
+   `(db, log)` and both **idempotent** — they must be safe to call repeatedly, because
+   the recommended cron setup deliberately fires duplicates (see below).
+3. **Routes** under `/admin/<source>/` registered in `index.ts`, each returning
+   `{ ok: true, log }` so a TA can read what happened by curling the endpoint.
+4. **Cron jobs** pointed at those routes.
 
----
+Two constraints are not optional:
 
-## How to Add Cron Jobs (Time Triggers)
+- **Use `services/schedule.ts` for timestamps.** Call `nextQuestionSchedule()` rather than
+  computing your own. It anchors the question to the fixed 08:00 / 12:00 / 24:00 Zurich
+  slots and handles CET/CEST. Deriving times from `Date.now()` instead makes the window
+  depend on when the cron happened to fire.
+- **Never let the voting window overlap the measured window.** `race_starts_at` must be
+  at or after `deadline`. Overlap does not raise an error; it silently lets late voters
+  observe the outcome, which corrupts the experiment. This is explained in full in
+  [the operator handbook](../docs-site/content/question-lifecycle.md).
 
-The app currently relies on explicit admin resolution. To automate:
+### Why there is no in-process scheduler
 
-1. Add `node-cron` to the backend: `npm install node-cron @types/node-cron --workspace=apps/backend`
+There are no `setInterval` calls and no `node-cron`. Every time-driven action is an
+idempotent HTTP endpoint called by an external scheduler (cron-job.org in production).
 
-2. In `apps/backend/src/index.ts`, after `app.listen(...)`:
-
-```typescript
-import cron from 'node-cron'
-
-// Every minute: auto-close questions past their deadline
-cron.schedule('* * * * *', () => {
-  // Optionally send push notifications when a question opens
-})
-
-// Daily at 9:00 CEST: notify users to vote
-cron.schedule('0 7 * * *', () => {
-  // sendPushToAllSubscribers(...)
-})
-```
+That keeps the container free to sleep between requests, and it makes every scheduled
+action reproducible by hand — debugging a missed job is `curl` plus reading the returned
+`log`, not attaching to a running process. Adding an in-process timer would give that up
+and is not the direction to go.
 
 ---
 
@@ -164,4 +179,21 @@ docker compose up --build -d
 docker compose exec backend npm run seed   # optional: add fresh test data
 ```
 
-Or, for local dev: `rm -f data/app.db && npm run seed`.
+Or, for local dev: `rm -f apps/backend/data/app.db && npm run seed`.
+
+That is the local case only. Resetting **production** also means taking a backup first and
+rotating `ADMIN_TOKEN`/`JWT_SECRET` — which invalidates the cron jobs' authorization
+header, the step most often forgotten. The full checklist is in
+[the operator handbook](../docs-site/content/semester-reset.md).
+
+---
+
+## Updating the Documentation
+
+- **Operational "how do I" content** → `docs-site/content/*.md`, then
+  `cd docs-site && npm run build`. Adding a page also requires an entry in
+  `site.config.mjs`; the build fails if content and navigation disagree, so a page cannot
+  quietly become unreachable. `npm run build` also verifies every internal link resolves.
+- **Design rationale** → `docs/architecture.md`.
+- **Algorithm and analysis** → `docs/algorithm.md`, `analysis/README.md`.
+- **This file** → how to change the code.

@@ -15,6 +15,10 @@ healthcheckTimeout = 60
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
-# NOTE: do NOT enable scale-to-zero ("serverless") on this service.
-# The backend runs setInterval jobs (YouTube + SMI auto-resolvers) that must
-# keep ticking; sleeping the container would stop them.
+# NOTE: scale-to-zero ("serverless") IS compatible with this service.
+# An earlier version ran setInterval jobs for the YouTube + SMI auto-resolvers, which
+# sleeping would have stopped. Those are gone — all scheduling is now external HTTP cron
+# hitting idempotent /admin/smi/* and /admin/youtube/* endpoints (see
+# docs-site/content/cron-setup.md), so the first call of the morning simply wakes the
+# container. Allow for a cold start of a few seconds; the schedule has an hour of slack
+# before the 08:00 publish, so this is harmless.

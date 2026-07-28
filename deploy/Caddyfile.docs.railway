@@ -1,0 +1,24 @@
+# Railway docs service: static file server, no TLS (Railway's edge handles HTTPS).
+#
+# Unlike the frontend Caddyfile there is NO SPA fallback here. The docs are real files,
+# so an unknown path should be an honest 404 page rather than silently rendering the
+# overview under the wrong URL — a broken link that looks like it worked is worse than
+# one that says so.
+:{$PORT} {
+	root * /srv
+	encode gzip
+	file_server
+
+	# Extensionless URLs (/deployment) resolve to /deployment.html.
+	try_files {path} {path}.html
+
+	handle_errors {
+		rewrite * /404.html
+		file_server
+	}
+
+	# Content is rebuilt and redeployed as a unit, so HTML must never be served stale.
+	# Hashed-free assets are small; no-cache keeps a redeploy from stranding old CSS.
+	@nocache path *.html /search-index.json
+	header @nocache Cache-Control "no-cache"
+}

@@ -178,24 +178,25 @@ In production on Railway, there are no in-process timers — the container can s
 |-----|----------|---------------|------|
 | SMI — create question | `POST /admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET Mon–Fri |
 | SMI — resolve question | `POST /admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET Mon–Fri |
-| YouTube — resolve | `POST /admin/youtube/resolve` | `0 * * * *` | Every hour |
+| YouTube — race tick | `POST /admin/youtube/resolve` | `*/5 * * * *` | Every 5 minutes |
 
 **SMI timezone:** Switzerland uses CET (UTC+1) in winter and CEST (UTC+2) in summer (late March – late October). During summer, change the SMI schedules to `0 6 * * 1-5` and `30 15 * * 1-5`. Alternatively, keep both variants active year-round — all endpoints are idempotent so a duplicate call does nothing.
 
 ### What each job does
 
-- **`/admin/smi/daily`** — fetches the previous SMI close from Stooq and creates today's question. Skips weekends and days where a question already exists.
-- **`/admin/smi/resolve`** — fetches today's closing price and resolves the question as A (higher) or B (flat/lower). Skips if market data is not yet available. Automatically removes questions on public holidays when no data arrives.
-- **`/admin/youtube/resolve`** — finds YouTube questions whose 24-hour deadline has passed, fetches current view counts, and resolves whichever video gained more views. Ties are left pending until the next hourly run.
+- **`/admin/smi/daily`** — fetches the previous SMI close (Yahoo Finance, with Stooq as a fallback) and creates today's question, published at 08:00 with voting closing at 12:00. Skips weekends, days where a question already exists, and any run late enough that voting would already be closed.
+- **`/admin/smi/resolve`** — fetches the day's closing price and resolves the question as A (higher) or B (flat/lower). Waits until after 18:00 Zurich for today's question. Skips if market data is not yet available. Removes past questions with no data at all, which is almost always a public holiday.
+- **`/admin/youtube/resolve`** — a **tick**, not a one-shot resolve. Each call snapshots baseline view counts for races whose 12:00 window has just opened, and closes out races whose 24:00 window has ended. Both halves are idempotent, which is why it runs every 5 minutes: a tighter interval keeps the real measured window closer to the nominal 12 hours. Exact ties are left pending and retried on the next tick.
 
 ### YouTube question creation (manual)
 
 YouTube questions require admin approval before publishing:
 
 1. Go to `/admin/login` and sign in with your `ADMIN_TOKEN`
-2. Navigate to **Admin → Suggest** to fetch a video pair from YouTube
-3. Review the pair and click **Approve** to publish it with a 24-hour deadline
-4. The hourly cron job will resolve it automatically once the deadline passes
+2. Click **YouTube Suggestion → Generate Suggestion** to fetch a video pair
+3. Review the pair (**Regenerate** if it is unsuitable) and click **Approve**
+4. The question runs on that day's fixed 08:00 / 12:00 / 24:00 anchors regardless of when you approved it — approving after 12:00 targets tomorrow's slot
+5. The 5-minute tick snapshots the baseline at 12:00 and resolves at 24:00
 
 ---
 
@@ -260,13 +261,20 @@ webapp/
 │           ├── api/      Typed fetch client
 │           ├── pages/    Register, Login, Today, History
 │           └── *.css     Token-based design system
-├── docs/
+├── analysis/             Python: Expert Algorithm over the exported votes
+├── docs/                 Design rationale
 │   ├── architecture.md
 │   ├── algorithm.md
 │   └── extending.md
+├── docs-site/            Operator handbook — deployable static site
+│   ├── content/          The markdown that becomes the site
+│   ├── build.mjs         ~200-line markdown → HTML generator
+│   └── site.config.mjs   Navigation (also decides what gets published)
+├── deploy/               Railway configs + Caddyfiles
 ├── docker-compose.yml
 ├── Dockerfile.backend
 ├── Dockerfile.frontend
+├── Dockerfile.docs.railway
 └── .env.example
 ```
 
@@ -303,6 +311,11 @@ Make sure `npm install` has been run and Node.js 20+ is active (`node --version`
 
 ## Further Reading
 
-- [Architecture decisions](docs/architecture.md)
-- [Expert Algorithm explanation](docs/algorithm.md)
-- [Extending the app (TA guide)](docs/extending.md)
+- **[Operator handbook](docs-site/content/)** — running the app for a semester: daily
+  operations, the admin console, cron setup, deployment, troubleshooting, lecture day.
+  Build it as a browsable site with `cd docs-site && npm install && npm run build`, or
+  deploy it (see [Deployment](docs-site/content/deployment.md#the-docs-site-itself)).
+- [Architecture decisions](docs/architecture.md) — why the app is built this way
+- [Expert Algorithm explanation](docs/algorithm.md) — the theory
+- [Analysis workflow](analysis/README.md) — turning the export into lecture material
+- [Extending the app (TA guide)](docs/extending.md) — making changes

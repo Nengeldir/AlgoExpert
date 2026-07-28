@@ -1,0 +1,18 @@
+{
+  "name": "@expert-algo/docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Static operator documentation site. Deliberately NOT an npm workspace of the root package — it keeps its own node_modules and lockfile so the backend/frontend Docker builds and their lockfile stay untouched.",
+  "scripts": {
+    "build": "node build.mjs && node check-links.mjs",
+    "dev": "node build.mjs --watch",
+    "check": "node check-links.mjs",
+    "serve": "node serve.mjs"
+  },
+  "dependencies": {
+    "highlight.js": "^11.9.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.0.1"
+  }
+}

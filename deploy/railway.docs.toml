@@ -1,0 +1,14 @@
+# Railway service config for the DOCS site (operator handbook).
+# In the Railway dashboard, create a service from this repo and set its
+# "Config-as-code path" to deploy/railway.docs.toml.
+#
+# No environment variables, no volume, no secrets — the output is static HTML built
+# from docs-site/content/. Scale-to-zero is safe here.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.docs.railway"
+
+[deploy]
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

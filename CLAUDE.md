@@ -105,10 +105,30 @@ Consequences baked into the code:
 ```
 apps/backend/   Fastify API — Node.js, TypeScript, CommonJS
 apps/frontend/  React SPA  — Vite, TypeScript, ESM
+analysis/       Python — Expert Algorithm over the exported votes
 docs/           Architecture, algorithm, and TA extension guide
+docs-site/      Operator handbook — markdown + a small static site generator
+deploy/         Railway configs and Caddyfiles
 ```
 
-npm workspaces link both packages under a single `node_modules` at the root.
+npm workspaces link `apps/backend` and `apps/frontend` under a single `node_modules` at
+the root. **`docs-site/` is deliberately not a workspace** — it has its own
+`node_modules` and lockfile, so its dependencies can never affect the backend/frontend
+Docker builds (which copy the root lockfile before installing).
+
+### Documentation — where things belong
+
+| Content | Location |
+|---------|----------|
+| Operational "how do I run this" | `docs-site/content/*.md` (audience: TAs/operators) |
+| Design rationale, "why is it like this" | `docs/architecture.md` |
+| Algorithm theory | `docs/algorithm.md` |
+| Analysis workflow | `analysis/README.md` |
+| How to change the code | `docs/extending.md` |
+
+Adding a handbook page requires an entry in `docs-site/site.config.mjs` — the build
+fails if `content/` and the nav disagree, and it verifies every internal link resolves
+(`cd docs-site && npm run build`).
 
 ### Backend (`apps/backend/src/`)
 

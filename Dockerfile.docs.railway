@@ -1,0 +1,24 @@
+# Railway docs service — the operator handbook.
+#
+# Builds the static site from docs-site/content/*.md and serves it with Caddy.
+# Mirrors the frontend service's shape (static build stage + caddy runtime), but has
+# no build args, no environment variables and no volume: the output is pure HTML.
+
+# ---- build stage ----
+FROM node:20-slim AS build
+WORKDIR /app
+ENV HUSKY=0
+
+# docs-site is deliberately NOT an npm workspace of the root package, so it installs
+# on its own and cannot disturb the backend/frontend lockfile.
+COPY docs-site/package.json docs-site/package-lock.json* ./
+RUN npm install --omit=dev --no-audit --no-fund
+
+COPY docs-site/ ./
+RUN npm run build
+
+# ---- runtime stage ----
+FROM caddy:2-alpine AS runtime
+COPY --from=build /app/dist /srv
+COPY deploy/Caddyfile.docs.railway /etc/caddy/Caddyfile
+# Railway provides PORT; Caddy reads it via the {$PORT} placeholder.
