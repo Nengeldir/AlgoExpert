@@ -1,0 +1,6 @@
+out*/
+__pycache__/
+.pytest_cache/
+votes.csv
+synthetic_class.csv
+legacy.csv

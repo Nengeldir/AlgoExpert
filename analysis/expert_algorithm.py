@@ -307,20 +307,18 @@ def simulate_follow_i(run: Run, n_trials: int = 10_000, seed: int = 0) -> dict[s
     quote. This simulates the realised rate so you can show the spread: a
     single run of the algorithm is a coin-flippy thing, and the class will ask.
     """
+    if not run.rounds:
+        return {"mean": 0.0, "p05": 0.0, "p50": 0.0, "p95": 0.0}
+
     rng = random.Random(seed)
+    probs = [r.p for r in run.rounds]
     outcomes: list[float] = []
 
-    per_round = []
-    for r in run.rounds:
-        shares = [(p, r.weight_shares[p]) for p in r.weight_shares if p in _voters(r)]
-        per_round.append((r, shares))
-
     for _ in range(n_trials):
-        hits = 0
-        for r, _shares in per_round:
-            if rng.random() < r.p:
-                hits += 1
-        outcomes.append(hits / len(run.rounds) if run.rounds else 0.0)
+        # Drawing an expert and checking their answer is the same coin flip as
+        # drawing directly against p_t, since p_t *is* the weight on the truth.
+        hits = sum(1 for p in probs if rng.random() < p)
+        outcomes.append(hits / len(probs))
 
     outcomes.sort()
     return {
@@ -334,12 +332,6 @@ def simulate_follow_i(run: Run, n_trials: int = 10_000, seed: int = 0) -> dict[s
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-
-
-def _voters(r: RoundResult) -> set[str]:
-    # RoundResult stores shares for everyone; voters are implied by n_voters
-    # only in aggregate, so simulation just uses p directly. Kept for clarity.
-    return set(r.weight_shares)
 
 
 def _argmax_choice(a: float, b: float, tie_break: Choice) -> Choice:
