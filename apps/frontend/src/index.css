@@ -208,10 +208,8 @@ body {
 
 /* Mobile BottomNavBar — single shared component, identical on every screen */
 .bottom-nav {
-  position: fixed;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
   z-index: 50;
   display: flex;
   justify-content: space-around;
@@ -272,7 +270,7 @@ body {
   flex: 1;
   width: 100%;
   min-width: 0;
-  padding-bottom: calc(var(--bottom-nav-height) + var(--space-6) + env(safe-area-inset-bottom));
+  padding-bottom: var(--space-6);
 }
 
 @media (min-width: 768px) {
