@@ -53,7 +53,7 @@ const NAV_ITEMS = [
 ]
 
 /* App shell: desktop sidebar + mobile top bar + mobile bottom nav.
-   Logout is always red and bottom-left; the bottom nav is a single shared
+   Logout is always red and bottom-right; the bottom nav is a single shared
    component so it is identical on every screen. */
 function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
@@ -127,6 +127,12 @@ function Layout({ children }: { children: React.ReactNode }) {
       <main className="app-main">{children}</main>
 
       <nav className="bottom-nav" aria-label="Main navigation">
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} className="bottom-nav__tab">
+            <Icon name={item.icon} />
+            {item.shortLabel}
+          </NavLink>
+        ))}
         <button
           className="bottom-nav__tab bottom-nav__tab--logout"
           onClick={handleContextualLogout}
@@ -134,12 +140,6 @@ function Layout({ children }: { children: React.ReactNode }) {
           <Icon name="logout" />
           Logout
         </button>
-        {NAV_ITEMS.map((item) => (
-          <NavLink key={item.to} to={item.to} className="bottom-nav__tab">
-            <Icon name={item.icon} />
-            {item.shortLabel}
-          </NavLink>
-        ))}
       </nav>
     </div>
   )
