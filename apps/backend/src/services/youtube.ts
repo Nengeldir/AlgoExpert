@@ -98,29 +98,49 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
     throw new Error(`Only ${candidates.length} channel(s) had subscriber data.`)
   }
 
-  // Sort by subscriber count then collect all adjacent pairs within a 4× subscriber ratio.
-  // Picking randomly from this pool gives variety across regenerations while keeping channels comparable.
-  candidates.sort((a, b) => a.subscribers - b.subscribers)
+  // Collect all pairs where both the channels (subscriber count) and the videos' current
+  // traction (view count) are comparable — a lopsided view count makes the 24 h race
+  // trivially predictable.
+  const SUBSCRIBER_RATIO_THRESHOLD = 4
+  const VIEW_RATIO_THRESHOLD = 2
+  // Among acceptable pairs, only the closest few by view count are considered, so a
+  // regeneration still varies but never lands on the loosest match the threshold allows.
+  const CLOSEST_PAIR_POOL = 8
 
-  const RATIO_THRESHOLD = 4
-  const acceptablePairs: [VideoCandidate, VideoCandidate][] = []
+  const ratio = (a: number, b: number) => Math.max(a, b) / Math.max(Math.min(a, b), 1)
 
+  const acceptablePairs: { pair: [VideoCandidate, VideoCandidate]; viewRatio: number }[] = []
   for (let i = 0; i < candidates.length - 1; i++) {
-    const ratio = candidates[i + 1].subscribers / Math.max(candidates[i].subscribers, 1)
-    if (ratio <= RATIO_THRESHOLD) {
-      acceptablePairs.push([candidates[i], candidates[i + 1]])
+    for (let j = i + 1; j < candidates.length; j++) {
+      const viewRatio = ratio(candidates[i].viewCount, candidates[j].viewCount)
+      if (
+        ratio(candidates[i].subscribers, candidates[j].subscribers) <= SUBSCRIBER_RATIO_THRESHOLD &&
+        viewRatio <= VIEW_RATIO_THRESHOLD
+      ) {
+        acceptablePairs.push({ pair: [candidates[i], candidates[j]], viewRatio })
+      }
     }
   }
 
-  // Fall back to all adjacent pairs if the threshold filtered everything out
-  const pool =
-    acceptablePairs.length > 0
-      ? acceptablePairs
-      : candidates
-          .slice(0, -1)
-          .map((c, i) => [c, candidates[i + 1]] as [VideoCandidate, VideoCandidate])
+  if (acceptablePairs.length > 0) {
+    acceptablePairs.sort((a, b) => a.viewRatio - b.viewRatio)
+    const pool = acceptablePairs.slice(0, CLOSEST_PAIR_POOL)
+    const [bestA, bestB] = pool[Math.floor(Math.random() * pool.length)].pair
+    return { videoA: bestA, videoB: bestB }
+  }
 
-  const [bestA, bestB] = pool[Math.floor(Math.random() * pool.length)]
+  // No pair satisfied both thresholds — fall back to the pair with the closest view counts
+  let fallback: [VideoCandidate, VideoCandidate] = [candidates[0], candidates[1]]
+  let closest = Infinity
+  for (let i = 0; i < candidates.length - 1; i++) {
+    for (let j = i + 1; j < candidates.length; j++) {
+      const r = ratio(candidates[i].viewCount, candidates[j].viewCount)
+      if (r < closest) {
+        closest = r
+        fallback = [candidates[i], candidates[j]]
+      }
+    }
+  }
 
-  return { videoA: bestA, videoB: bestB }
+  return { videoA: fallback[0], videoB: fallback[1] }
 }

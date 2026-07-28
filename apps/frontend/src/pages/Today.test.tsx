@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Today from './Today'
@@ -56,6 +56,54 @@ describe('Today page', () => {
       </MemoryRouter>,
     )
     await waitFor(() => expect(screen.getByText(/no open questions/i)).toBeInTheDocument())
+  })
+
+  it('only casts a vote after selecting an option and confirming', async () => {
+    vi.mocked(client.api.getQuestions)
+      .mockResolvedValueOnce({ questions: [openQuestion] })
+      .mockResolvedValueOnce({
+        questions: [{ ...openQuestion, user_vote: 'A' }],
+      })
+    vi.mocked(client.api.castVote).mockResolvedValueOnce({ question_id: 1, choice: 'A' })
+
+    render(
+      <MemoryRouter>
+        <Today />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByText('Will it rain?')).toBeInTheDocument())
+
+    // Confirm button is disabled until an option is selected
+    const confirmBefore = screen.getByRole('button', { name: /select an option/i })
+    expect(confirmBefore).toBeDisabled()
+
+    // Selecting an option does not cast the vote yet
+    fireEvent.click(screen.getByRole('button', { name: 'Yes' }))
+    expect(client.api.castVote).not.toHaveBeenCalled()
+
+    // Confirming sends the selected choice
+    fireEvent.click(screen.getByRole('button', { name: /confirm vote — option a/i }))
+    await waitFor(() => expect(client.api.castVote).toHaveBeenCalledWith(1, 'A'))
+    await waitFor(() =>
+      expect(screen.getByText(/your vote: option a — locked in/i)).toBeInTheDocument(),
+    )
+  })
+
+  it('deselects an option when clicked twice', async () => {
+    vi.mocked(client.api.getQuestions).mockResolvedValueOnce({ questions: [openQuestion] })
+    render(
+      <MemoryRouter>
+        <Today />
+      </MemoryRouter>,
+    )
+    await waitFor(() => expect(screen.getByText('Will it rain?')).toBeInTheDocument())
+
+    const optionA = screen.getByRole('button', { name: 'Yes' })
+    fireEvent.click(optionA)
+    expect(optionA).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(optionA)
+    expect(optionA).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /select an option/i })).toBeDisabled()
   })
 
   it('shows error on fetch failure', async () => {

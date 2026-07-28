@@ -139,6 +139,10 @@ export default function AdminQuestions() {
   const [deleteConfirm, setDeleteConfirm] = useState<Record<number, boolean>>({})
   const [deleteLoading, setDeleteLoading] = useState<Record<number, boolean>>({})
 
+  const [smiLoading, setSmiLoading] = useState(false)
+  const [smiMessage, setSmiMessage] = useState('')
+  const [smiError, setSmiError] = useState('')
+
   const [showYoutube, setShowYoutube] = useState(false)
   const [ytSuggestion, setYtSuggestion] = useState<YoutubeSuggestion | null>(null)
   const [ytLoading, setYtLoading] = useState(false)
@@ -272,6 +276,22 @@ export default function AdminQuestions() {
     }
   }
 
+  async function handleSmiPublish() {
+    setSmiLoading(true)
+    setSmiMessage('')
+    setSmiError('')
+    try {
+      const { log } = await adminApi.publishSmiQuestion()
+      const summary = log.map((line) => line.replace(/^\[smi\]\s*/, '')).join(' · ')
+      setSmiMessage(summary || 'SMI job ran — nothing to do.')
+      await load()
+    } catch (err) {
+      setSmiError(err instanceof ApiError ? err.message : 'Failed to publish SMI question.')
+    } finally {
+      setSmiLoading(false)
+    }
+  }
+
   async function handleYoutubeSuggest(refresh = false) {
     setYtLoading(true)
     setYtError('')
@@ -338,6 +358,13 @@ export default function AdminQuestions() {
           >
             {showYoutube ? 'Hide YouTube' : 'YouTube Suggestion'}
           </button>
+          <button
+            className="btn btn--sm btn--outline"
+            onClick={handleSmiPublish}
+            disabled={smiLoading}
+          >
+            {smiLoading ? 'Publishing…' : 'Publish SMI Question'}
+          </button>
           <button className="btn btn--sm btn--outline" onClick={() => handleExport('csv')}>
             Export CSV
           </button>
@@ -350,6 +377,17 @@ export default function AdminQuestions() {
       {exportError && (
         <div className="alert alert--error" style={{ marginTop: 'var(--space-3)' }}>
           {exportError}
+        </div>
+      )}
+
+      {smiMessage && (
+        <div className="alert alert--success" style={{ marginTop: 'var(--space-3)' }}>
+          SMI: {smiMessage}
+        </div>
+      )}
+      {smiError && (
+        <div className="alert alert--error" style={{ marginTop: 'var(--space-3)' }}>
+          {smiError}
         </div>
       )}
 

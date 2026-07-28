@@ -1,26 +1,45 @@
 import type BetterSqlite3 from 'better-sqlite3'
 
-// Stooq is a reliable alternative to Yahoo Finance that works from cloud IPs.
-// Returns a CSV with columns: Date,Open,High,Low,Close,Volume (YYYY-MM-DD dates).
-const STOOQ_URL = 'https://stooq.com/q/d/l/?s=%5Esmi&i=d'
-
 interface DayClose {
   date: string // YYYY-MM-DD
   close: number
 }
 
-async function fetchRecentCloses(): Promise<DayClose[]> {
-  const res = await fetch(STOOQ_URL, {
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  })
-  if (!res.ok) throw new Error(`Stooq HTTP ${res.status}`)
-  const text = await res.text()
-
-  const lines = text.trim().split('\n')
-  if (lines.length < 2) throw new Error('Stooq: no data rows')
+// Keyless; may be blocked from some cloud egress IPs
+async function fetchClosesYahoo(): Promise<DayClose[]> {
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5ESSMI?interval=1d&range=1mo'
+  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = (await res.json()) as {
+    chart?: {
+      result?: { timestamp?: number[]; indicators?: { quote?: { close?: (number | null)[] }[] } }[]
+    }
+  }
+  const result = json.chart?.result?.[0]
+  const timestamps = result?.timestamp ?? []
+  const closeValues = result?.indicators?.quote?.[0]?.close ?? []
 
   const closes: DayClose[] = []
-  for (const line of lines.slice(1)) {
+  for (let i = 0; i < timestamps.length; i++) {
+    const close = closeValues[i]
+    if (close == null) continue // null rows are holidays / gaps
+    closes.push({ date: zurichDate(new Date(timestamps[i] * 1000)), close })
+  }
+  return closes.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+// CSV with columns: Date,Open,High,Low,Close,Volume (YYYY-MM-DD dates).
+// Stooq serves a JS browser-verification page to non-browser clients as of mid-2026,
+// so this usually yields zero rows — kept as a last resort in case that gate is lifted.
+async function fetchClosesStooq(): Promise<DayClose[]> {
+  const res = await fetch('https://stooq.com/q/d/l/?s=%5Esmi&i=d', {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const text = await res.text()
+
+  const closes: DayClose[] = []
+  for (const line of text.trim().split('\n').slice(1)) {
     const parts = line.split(',')
     if (parts.length < 5) continue
     const date = parts[0].trim()
@@ -29,6 +48,26 @@ async function fetchRecentCloses(): Promise<DayClose[]> {
   }
 
   return closes.sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export async function fetchRecentCloses(
+  log: (msg: string) => void = console.log,
+): Promise<DayClose[]> {
+  const providers: [string, () => Promise<DayClose[]>][] = [
+    ['yahoo', fetchClosesYahoo],
+    ['stooq', fetchClosesStooq],
+  ]
+
+  for (const [name, fetchCloses] of providers) {
+    try {
+      const closes = await fetchCloses()
+      if (closes.length === 0) throw new Error('no data rows')
+      return closes
+    } catch (err) {
+      log(`[smi] ${name} failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+  throw new Error('all SMI data providers failed')
 }
 
 function zurichDate(d: Date = new Date()): string {
@@ -81,16 +120,22 @@ export async function createDailySmiQuestion(
   log: (msg: string) => void = console.log,
 ): Promise<void> {
   const now = new Date()
-  if (!isZurichWeekday(now)) return
+  if (!isZurichWeekday(now)) {
+    log('[smi] skipped — market is closed on weekends')
+    return
+  }
 
   const today = zurichDate(now)
 
   const existing = db.prepare('SELECT id FROM smi_questions WHERE question_date = ?').get(today)
-  if (existing) return
+  if (existing) {
+    log(`[smi] question for ${today} already exists`)
+    return
+  }
 
   let closes: DayClose[]
   try {
-    closes = await fetchRecentCloses()
+    closes = await fetchRecentCloses(log)
   } catch (err) {
     log(`[smi] fetch error: ${String(err)}`)
     return
@@ -156,7 +201,7 @@ export async function resolveExpiredSmiQuestions(
 
   let closes: DayClose[]
   try {
-    closes = await fetchRecentCloses()
+    closes = await fetchRecentCloses(log)
   } catch (err) {
     log(`[smi] fetch error during resolution: ${String(err)}`)
     return

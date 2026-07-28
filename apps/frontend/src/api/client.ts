@@ -228,6 +228,13 @@ export const adminApi = {
     )
   },
 
+  publishSmiQuestion() {
+    return adminRequest<{ ok: boolean; log: string[] }>('/admin/smi/daily', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
+
   approveYoutubeSuggestion() {
     return adminRequest<{ question: AdminQuestion }>('/admin/youtube/approve', {
       method: 'POST',

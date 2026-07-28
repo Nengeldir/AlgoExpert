@@ -71,17 +71,20 @@ function QuestionCard({
 }) {
   const [voting, setVoting] = useState(false)
   const [voteError, setVoteError] = useState<string | null>(null)
+  const [pendingChoice, setPendingChoice] = useState<'A' | 'B' | null>(null)
   const deadline = new Date(question.deadline)
 
-  async function handleVote(choice: 'A' | 'B') {
+  async function handleConfirmVote() {
+    if (!pendingChoice) return
     setVoteError(null)
     setVoting(true)
     try {
-      await api.castVote(question.id, choice)
+      await api.castVote(question.id, pendingChoice)
       // Optimistically update — refetch for accuracy
       const { questions } = await api.getQuestions()
       const updated = questions.find((q) => q.id === question.id)
       if (updated) onVote(updated)
+      setPendingChoice(null)
     } catch (err) {
       setVoteError(err instanceof ApiError ? err.message : 'Vote failed.')
     } finally {
@@ -91,6 +94,7 @@ function QuestionCard({
 
   function optionClass(option: 'A' | 'B') {
     const base = 'btn btn--option'
+    if (!question.user_vote && pendingChoice === option) return `${base} btn--option--selected`
     if (!question.is_resolved && question.user_vote === option)
       return `${base} btn--option--selected`
     if (question.is_resolved && question.ground_truth === option && question.user_vote === option)
@@ -159,10 +163,11 @@ function QuestionCard({
               key={opt}
               className={optionClass(opt)}
               onClick={() => {
-                void handleVote(opt)
+                setVoteError(null)
+                setPendingChoice((prev) => (prev === opt ? null : opt))
               }}
               disabled={!canVote || voting}
-              aria-pressed={question.user_vote === opt}
+              aria-pressed={canVote ? pendingChoice === opt : question.user_vote === opt}
             >
               {thumb && <img src={thumb} alt="" className="option-thumb" />}
               <span>
@@ -176,6 +181,23 @@ function QuestionCard({
           )
         })}
       </div>
+
+      {canVote && (
+        <button
+          className="btn btn--primary"
+          style={{ width: '100%', marginTop: 'var(--space-4)' }}
+          onClick={() => {
+            void handleConfirmVote()
+          }}
+          disabled={!pendingChoice || voting}
+        >
+          {voting
+            ? 'Submitting…'
+            : pendingChoice
+              ? `Confirm vote — Option ${pendingChoice}`
+              : 'Select an option to vote'}
+        </button>
+      )}
 
       {!question.is_open && !question.is_resolved && (
         <div className="alert alert--info" style={{ marginTop: 'var(--space-3)' }}>
