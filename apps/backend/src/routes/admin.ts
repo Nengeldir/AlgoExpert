@@ -125,6 +125,8 @@ export async function adminRoutes(app: FastifyInstance) {
       const rows = app.db
         .prepare(
           `SELECT
+             q.id          AS question_id,
+             q.deadline,
              u.pseudonym,
              q.title       AS question_title,
              q.option_a,
@@ -136,17 +138,17 @@ export async function adminRoutes(app: FastifyInstance) {
            FROM votes v
            JOIN users     u ON u.id = v.user_id
            JOIN questions q ON q.id = v.question_id
-           ORDER BY q.id ASC, u.pseudonym ASC`,
+           ORDER BY q.deadline ASC, q.id ASC, u.pseudonym ASC`,
         )
         .all() as VoteExportRow[]
 
       if (format === 'csv') {
         const header =
-          'pseudonym,question_title,option_a,option_b,ground_truth,user_vote,is_correct,voted_at'
+          'question_id,deadline,pseudonym,question_title,option_a,option_b,ground_truth,user_vote,is_correct,voted_at'
         const body = rows
           .map(
             (r) =>
-              `"${r.pseudonym}","${r.question_title}","${r.option_a}","${r.option_b}","${r.ground_truth ?? ''}","${r.user_vote}","${r.is_correct ?? ''}","${r.voted_at}"`,
+              `"${r.question_id}","${r.deadline}","${r.pseudonym}","${r.question_title}","${r.option_a}","${r.option_b}","${r.ground_truth ?? ''}","${r.user_vote}","${r.is_correct ?? ''}","${r.voted_at}"`,
           )
           .join('\n')
         return reply
@@ -224,6 +226,8 @@ interface QuestionVoteRow {
 }
 
 interface VoteExportRow {
+  question_id: number
+  deadline: string
   pseudonym: string
   question_title: string
   option_a: string

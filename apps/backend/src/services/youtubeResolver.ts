@@ -34,6 +34,11 @@ export async function resolveExpiredYoutubeQuestions(
   apiKey: string,
   log: (msg: string) => void = console.log,
 ): Promise<void> {
+  // deadline is stored as an ISO-8601 string ("...T14:20:48.123Z"), so it must be compared
+  // against another ISO string — datetime('now') yields "... 14:20:48" and the space vs 'T'
+  // makes the lexicographic comparison wrong until the UTC date rolls over.
+  const now = new Date().toISOString()
+
   const pending = db
     .prepare(
       `SELECT q.id          AS question_id,
@@ -42,11 +47,11 @@ export async function resolveExpiredYoutubeQuestions(
        FROM   questions q
        JOIN   youtube_suggestions ys ON ys.question_id = q.id
        WHERE  q.ground_truth IS NULL
-         AND  q.deadline < datetime('now')
+         AND  q.deadline < ?
          AND  ys.video_a_views IS NOT NULL
          AND  ys.video_b_views IS NOT NULL`,
     )
-    .all() as PendingRow[]
+    .all(now) as PendingRow[]
 
   if (pending.length === 0) return
 

@@ -7,16 +7,22 @@ export async function historyRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
     handler: async (request, reply) => {
       const userId = request.user.userId
+      // deadline is an ISO-8601 string, so compare against one — datetime('now') has a space
+      // where the ISO format has 'T', which breaks the lexicographic comparison.
+      const now = new Date().toISOString()
 
       const questions = app.db
         .prepare(
           `SELECT q.*, v.choice AS user_vote, v.is_correct
            FROM questions q
            LEFT JOIN votes v ON v.question_id = q.id AND v.user_id = ?
-           WHERE q.deadline < datetime('now')
+           WHERE q.deadline < ?
            ORDER BY q.deadline DESC`,
         )
-        .all(userId) as (QuestionRow & { user_vote: 'A' | 'B' | null; is_correct: 0 | 1 | null })[]
+        .all(userId, now) as (QuestionRow & {
+        user_vote: 'A' | 'B' | null
+        is_correct: 0 | 1 | null
+      })[]
 
       const history = questions.map((q) => ({
         id: q.id,
