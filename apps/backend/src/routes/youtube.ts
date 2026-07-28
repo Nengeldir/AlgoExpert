@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { requireAdmin } from '../plugins/authenticate'
 import { fetchYoutubePair } from '../services/youtube'
-import { resolveExpiredYoutubeQuestions } from '../services/youtubeResolver'
+import { runYoutubeRaceTick } from '../services/youtubeResolver'
+import { nextQuestionSchedule } from '../services/schedule'
 import type { QuestionRow } from '../types'
 
 export interface YoutubeSuggestionRow {
@@ -101,8 +102,10 @@ export async function youtubeRoutes(app: FastifyInstance) {
     },
   })
 
-  // POST /admin/youtube/resolve — resolve any YouTube questions whose deadline has passed.
-  // Call this hourly from an external cron service.
+  // POST /admin/youtube/resolve — drives both ends of the measurement window: snapshots
+  // baseline views for races that have just started, and resolves races that have ended.
+  // Both halves are idempotent, so call this every 5 minutes from an external cron service;
+  // a tighter interval keeps the real window closer to the nominal 12 h.
   app.post('/resolve', {
     handler: async (_request, reply) => {
       const apiKey = process.env.YOUTUBE_API_KEY
@@ -110,7 +113,7 @@ export async function youtubeRoutes(app: FastifyInstance) {
         return reply.status(503).send({ error: 'YOUTUBE_API_KEY is not configured on the server.' })
       }
       const messages: string[] = []
-      await resolveExpiredYoutubeQuestions(app.db, apiKey, (msg) => messages.push(msg))
+      await runYoutubeRaceTick(app.db, apiKey, (msg) => messages.push(msg))
       return reply.send({ ok: true, log: messages })
     },
   })
@@ -130,8 +133,9 @@ export async function youtubeRoutes(app: FastifyInstance) {
         })
       }
 
-      // Deadline = 24 hours from now
-      const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      // Timestamps come from the fixed daily anchors, not from when this endpoint was hit,
+      // so approving early or late does not shift the window students vote in.
+      const schedule = nextQuestionSchedule()
 
       const fmtViews = (n: number | null) =>
         n == null
@@ -142,11 +146,14 @@ export async function youtubeRoutes(app: FastifyInstance) {
               ? `${(n / 1_000).toFixed(1)}K`
               : String(n)
 
-      const title = `YouTube 24 h Race: Which video gains more views?`
+      const title = `YouTube 12 h Race: Which video gains more views?`
       const description =
-        `Which will gain more views in the next 24 hours — ` +
-        `"${suggestion.video_a_title}" by ${suggestion.video_a_channel} (currently ${fmtViews(suggestion.video_a_views)} views) ` +
-        `or "${suggestion.video_b_title}" by ${suggestion.video_b_channel} (currently ${fmtViews(suggestion.video_b_views)} views)?`
+        `The race runs from 12:00 to 24:00 CET today — it starts when voting closes, so no ` +
+        `part of it can be observed while you are still deciding. Which will gain more views ` +
+        `in that window: "${suggestion.video_a_title}" by ${suggestion.video_a_channel} ` +
+        `(${fmtViews(suggestion.video_a_views)} views when this question was drawn) or ` +
+        `"${suggestion.video_b_title}" by ${suggestion.video_b_channel} ` +
+        `(${fmtViews(suggestion.video_b_views)} views when this question was drawn)?`
       const option_a = `${suggestion.video_a_title} — ${suggestion.video_a_channel}`
       const option_b = `${suggestion.video_b_title} — ${suggestion.video_b_channel}`
 
@@ -154,19 +161,22 @@ export async function youtubeRoutes(app: FastifyInstance) {
       const approve = app.db.transaction(() => {
         const qResult = app.db
           .prepare(
-            `INSERT INTO questions (title, description, option_a, option_b, deadline, option_a_image, option_b_image, option_a_views, option_b_views)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO questions (title, description, option_a, option_b, deadline, option_a_image, option_b_image, option_a_views, option_b_views, published_at, race_starts_at, race_ends_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
             title,
             description,
             option_a,
             option_b,
-            deadline,
+            schedule.deadline,
             suggestion.video_a_thumbnail,
             suggestion.video_b_thumbnail,
             suggestion.video_a_views,
             suggestion.video_b_views,
+            schedule.publishedAt,
+            schedule.raceStartsAt,
+            schedule.raceEndsAt,
           )
 
         app.db

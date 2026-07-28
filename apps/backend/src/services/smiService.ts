@@ -1,4 +1,5 @@
 import type BetterSqlite3 from 'better-sqlite3'
+import { PUBLISH_HOUR, VOTING_CLOSE_HOUR, zurichDate, zurichTimeUTC } from './schedule'
 
 interface DayClose {
   date: string // YYYY-MM-DD
@@ -70,10 +71,6 @@ export async function fetchRecentCloses(
   throw new Error('all SMI data providers failed')
 }
 
-function zurichDate(d: Date = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(d)
-}
-
 function zurichHour(d: Date = new Date()): number {
   return parseInt(
     new Intl.DateTimeFormat('en-US', {
@@ -91,21 +88,6 @@ function isZurichWeekday(d: Date = new Date()): boolean {
     weekday: 'long',
   }).format(d)
   return day !== 'Saturday' && day !== 'Sunday'
-}
-
-// Returns the UTC ISO string for 17:30 Europe/Zurich on a given YYYY-MM-DD date
-function marketCloseUTC(zurichDateStr: string): string {
-  // Probe UTC 17:30 on that date and measure the Zurich offset to correct it
-  const probe = new Date(`${zurichDateStr}T17:30:00Z`)
-  const zurichHM = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Zurich',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(probe)
-  const [zh, zm] = zurichHM.split(':').map(Number)
-  const diffMs = (17 * 60 + 30 - (zh * 60 + zm)) * 60 * 1000
-  return new Date(probe.getTime() + diffMs).toISOString()
 }
 
 interface SmiQuestionRow {
@@ -133,6 +115,14 @@ export async function createDailySmiQuestion(
     return
   }
 
+  // The daily cron is expected to fire around 08:00 Zurich. If it fires late enough that
+  // voting would already be closed, publishing an unvotable question helps nobody.
+  const deadline = zurichTimeUTC(today, VOTING_CLOSE_HOUR)
+  if (now.toISOString() >= deadline) {
+    log(`[smi] skipped — voting for ${today} already closed at ${deadline}`)
+    return
+  }
+
   let closes: DayClose[]
   try {
     closes = await fetchRecentCloses(log)
@@ -155,19 +145,23 @@ export async function createDailySmiQuestion(
     timeZone: 'UTC',
   })
 
-  const deadline = marketCloseUTC(today)
+  // Voting closes at 12:00 Zurich rather than at the 17:30 market close. With the old
+  // deadline a voter at 17:25 could just read the live index level and know the answer;
+  // now the 12:00–17:30 stretch of the trading day is never observable to voters.
+  const publishedAt = zurichTimeUTC(today, PUBLISH_HOUR)
 
   const qResult = db
     .prepare(
-      `INSERT INTO questions (title, description, option_a, option_b, deadline)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO questions (title, description, option_a, option_b, deadline, published_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .run(
       'SMI: Higher close today?',
-      `The Swiss Market Index (SMI) closed at ${prev.close.toFixed(2)} on ${prevFormatted}. Will it close higher today?`,
+      `The Swiss Market Index (SMI) closed at ${prev.close.toFixed(2)} on ${prevFormatted}. Will it close higher today? Voting closes at 12:00 CET; the question is settled on today's 17:30 close.`,
       'Yes — higher close',
       'No — flat or lower',
       deadline,
+      publishedAt,
     )
 
   db.prepare(

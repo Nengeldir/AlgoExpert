@@ -21,56 +21,111 @@ async function fetchCurrentViews(apiKey: string, videoIds: string[]): Promise<Ma
   return map
 }
 
-interface PendingRow {
+interface StartRow {
   question_id: number
+  suggestion_id: number
   video_a_id: string
   video_b_id: string
-  video_a_views: number
-  video_b_views: number
 }
 
-export async function resolveExpiredYoutubeQuestions(
+interface EndRow {
+  question_id: number
+  suggestion_id: number
+  video_a_id: string
+  video_b_id: string
+  race_start_views_a: number
+  race_start_views_b: number
+  race_start_at: string
+}
+
+/**
+ * Snapshot the baseline view counts for races whose voting has just closed.
+ *
+ * The baseline is deliberately NOT taken when the pair is suggested: the measurement window
+ * has to begin after voting closes, otherwise voters can watch part of the outcome unfold
+ * and simply read off the answer instead of predicting it.
+ */
+async function snapshotRaceStarts(
   db: BetterSqlite3.Database,
   apiKey: string,
-  log: (msg: string) => void = console.log,
+  now: string,
+  log: (msg: string) => void,
 ): Promise<void> {
-  // deadline is stored as an ISO-8601 string ("...T14:20:48.123Z"), so it must be compared
-  // against another ISO string — datetime('now') yields "... 14:20:48" and the space vs 'T'
-  // makes the lexicographic comparison wrong until the UTC date rolls over.
-  const now = new Date().toISOString()
-
-  const pending = db
+  const starting = db
     .prepare(
-      `SELECT q.id          AS question_id,
-              ys.video_a_id, ys.video_b_id,
-              ys.video_a_views, ys.video_b_views
+      `SELECT q.id AS question_id, ys.id AS suggestion_id, ys.video_a_id, ys.video_b_id
        FROM   questions q
        JOIN   youtube_suggestions ys ON ys.question_id = q.id
-       WHERE  q.ground_truth IS NULL
-         AND  q.deadline < ?
-         AND  ys.video_a_views IS NOT NULL
-         AND  ys.video_b_views IS NOT NULL`,
+       WHERE  q.race_starts_at IS NOT NULL
+         AND  q.race_starts_at <= ?
+         AND  ys.race_start_views_a IS NULL`,
     )
-    .all(now) as PendingRow[]
+    .all(now) as StartRow[]
 
-  if (pending.length === 0) return
-
-  for (const row of pending) {
+  for (const row of starting) {
     try {
       const current = await fetchCurrentViews(apiKey, [row.video_a_id, row.video_b_id])
-      const curA = current.get(row.video_a_id)
-      const curB = current.get(row.video_b_id)
+      const a = current.get(row.video_a_id)
+      const b = current.get(row.video_b_id)
 
-      if (curA == null || curB == null) {
-        log(`[yt-resolver] question ${row.question_id}: could not fetch view counts, skipping`)
+      if (a == null || b == null) {
+        log(`[yt-race] question ${row.question_id}: baseline fetch incomplete, will retry`)
         continue
       }
 
-      const deltaA = curA - row.video_a_views
-      const deltaB = curB - row.video_b_views
+      db.prepare(
+        `UPDATE youtube_suggestions
+         SET race_start_views_a = ?, race_start_views_b = ?, race_start_at = ?
+         WHERE id = ?`,
+      ).run(a, b, now, row.suggestion_id)
+
+      log(
+        `[yt-race] question ${row.question_id} baseline captured at ${now}` +
+          ` (A=${a.toLocaleString()}, B=${b.toLocaleString()})`,
+      )
+    } catch (err) {
+      log(`[yt-race] question ${row.question_id} baseline failed: ${String(err)}`)
+    }
+  }
+}
+
+/** Close out races whose measurement window has ended and score the votes. */
+async function resolveFinishedRaces(
+  db: BetterSqlite3.Database,
+  apiKey: string,
+  now: string,
+  log: (msg: string) => void,
+): Promise<void> {
+  const finished = db
+    .prepare(
+      `SELECT q.id AS question_id, ys.id AS suggestion_id, ys.video_a_id, ys.video_b_id,
+              ys.race_start_views_a, ys.race_start_views_b, ys.race_start_at
+       FROM   questions q
+       JOIN   youtube_suggestions ys ON ys.question_id = q.id
+       WHERE  q.ground_truth IS NULL
+         AND  q.race_ends_at IS NOT NULL
+         AND  q.race_ends_at <= ?
+         AND  ys.race_start_views_a IS NOT NULL
+         AND  ys.race_start_views_b IS NOT NULL`,
+    )
+    .all(now) as EndRow[]
+
+  for (const row of finished) {
+    try {
+      const current = await fetchCurrentViews(apiKey, [row.video_a_id, row.video_b_id])
+      const endA = current.get(row.video_a_id)
+      const endB = current.get(row.video_b_id)
+
+      if (endA == null || endB == null) {
+        log(`[yt-race] question ${row.question_id}: closing fetch incomplete, will retry`)
+        continue
+      }
+
+      const deltaA = endA - row.race_start_views_a
+      const deltaB = endB - row.race_start_views_b
 
       if (deltaA === deltaB) {
-        log(`[yt-resolver] question ${row.question_id}: tie (ΔA=${deltaA}, ΔB=${deltaB}), skipping`)
+        log(`[yt-race] question ${row.question_id}: tie (ΔA=${deltaA}, ΔB=${deltaB}), skipping`)
         continue
       }
 
@@ -78,8 +133,16 @@ export async function resolveExpiredYoutubeQuestions(
 
       db.transaction(() => {
         db.prepare(
-          `UPDATE questions SET ground_truth = ?, resolved_at = datetime('now') WHERE id = ?`,
-        ).run(winner, row.question_id)
+          `UPDATE youtube_suggestions
+           SET race_end_views_a = ?, race_end_views_b = ?, race_end_at = ?
+           WHERE id = ?`,
+        ).run(endA, endB, now, row.suggestion_id)
+
+        db.prepare(`UPDATE questions SET ground_truth = ?, resolved_at = ? WHERE id = ?`).run(
+          winner,
+          now,
+          row.question_id,
+        )
 
         db.prepare(
           `UPDATE votes SET is_correct = CASE WHEN choice = ? THEN 1 ELSE 0 END
@@ -87,12 +150,34 @@ export async function resolveExpiredYoutubeQuestions(
         ).run(winner, row.question_id)
       })()
 
+      const windowMin = Math.round((Date.parse(now) - Date.parse(row.race_start_at)) / 60_000)
       log(
-        `[yt-resolver] question ${row.question_id} auto-resolved → ${winner}` +
-          ` (ΔA=${deltaA.toLocaleString()}, ΔB=${deltaB.toLocaleString()})`,
+        `[yt-race] question ${row.question_id} resolved → ${winner}` +
+          ` (ΔA=${deltaA.toLocaleString()}, ΔB=${deltaB.toLocaleString()};` +
+          ` measured over ${windowMin} min)`,
       )
     } catch (err) {
-      log(`[yt-resolver] question ${row.question_id} failed: ${String(err)}`)
+      log(`[yt-race] question ${row.question_id} resolution failed: ${String(err)}`)
     }
   }
+}
+
+/**
+ * One cron tick: open any races that have started, close any that have ended.
+ *
+ * Both halves are idempotent, so firing this more often only tightens how closely the real
+ * measurement window tracks the nominal one. Any slop applies to both videos equally — they
+ * are read in a single API call — so it lengthens the window rather than favouring an option.
+ */
+export async function runYoutubeRaceTick(
+  db: BetterSqlite3.Database,
+  apiKey: string,
+  log: (msg: string) => void = console.log,
+): Promise<void> {
+  // deadline/race timestamps are ISO-8601 strings, so compare against one — datetime('now')
+  // has a space where the ISO format has 'T', which breaks the lexicographic comparison.
+  const now = new Date().toISOString()
+
+  await snapshotRaceStarts(db, apiKey, now, log)
+  await resolveFinishedRaces(db, apiKey, now, log)
 }

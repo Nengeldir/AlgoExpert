@@ -511,7 +511,10 @@ export default function AdminQuestions() {
               </div>
 
               <p className="question-description" style={{ marginTop: 'var(--space-4)' }}>
-                <strong>Question:</strong> Which video gains more views in the next 24 hours?
+                <strong>Question:</strong> Which video gains more views between 12:00 and 24:00 CET?
+                <br />
+                Published 08:00, voting closes 12:00 — the race starts when voting closes, so
+                approving early or late does not shift the window.
               </p>
 
               {ytSuggestion.approved ? (

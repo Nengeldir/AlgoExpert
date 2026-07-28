@@ -101,6 +101,20 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
     'ALTER TABLE youtube_suggestions ADD COLUMN video_a_views INTEGER',
     'ALTER TABLE youtube_suggestions ADD COLUMN video_b_published_at TEXT',
     'ALTER TABLE youtube_suggestions ADD COLUMN video_b_views INTEGER',
+    // Voting window: questions are hidden until published_at, and deadline closes voting
+    'ALTER TABLE questions ADD COLUMN published_at TEXT',
+    // Measurement window — starts when voting closes so the outcome is never observable
+    // to voters. NULL for question types that are not measured over a window.
+    'ALTER TABLE questions ADD COLUMN race_starts_at TEXT',
+    'ALTER TABLE questions ADD COLUMN race_ends_at TEXT',
+    // View counts snapshotted at each end of the measurement window, with the instant they
+    // were actually taken so the true window length stays auditable in the export
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_start_views_a INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_start_views_b INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_start_at TEXT',
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_end_views_a INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_end_views_b INTEGER',
+    'ALTER TABLE youtube_suggestions ADD COLUMN race_end_at TEXT',
   ]
   for (const sql of alterations) {
     try {

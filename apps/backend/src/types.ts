@@ -52,7 +52,11 @@ export interface QuestionRow {
   option_b_image: string | null
   option_a_views: number | null
   option_b_views: number | null
+  /** Voting closes here; also the start of the measurement window */
   deadline: string
+  published_at: string | null
+  race_starts_at: string | null
+  race_ends_at: string | null
   resolved_at: string | null
   ground_truth: 'A' | 'B' | null
   created_at: string

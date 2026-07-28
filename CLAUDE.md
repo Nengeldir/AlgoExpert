@@ -70,11 +70,33 @@ All three jobs use:
 |-----|-----|---------------|-------|
 | SMI — create question | `/admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET (UTC+1). Change to `0 6 * * 1-5` during CEST (UTC+2, late Mar – late Oct) |
 | SMI — resolve question | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET. Change to `30 15 * * 1-5` during CEST |
-| YouTube — resolve | `/admin/youtube/resolve` | `0 * * * *` | Every hour; timezone-agnostic |
+| YouTube — race tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Drives **both** ends of the race (see below) |
 
 **SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer. The simplest workaround is to run both UTC offset schedules year-round — all endpoints are idempotent so duplicate calls are harmless.
 
-**YouTube creation** remains manual: visit `/admin/youtube/suggest` to fetch a pair, then `/admin/youtube/approve` to publish it as a question.
+**YouTube creation** remains manual: visit `/admin/youtube/suggest` to fetch a pair, then `/admin/youtube/approve` to publish it as a question. Approving is decoupled from the schedule — you can approve any time before 12:00 CET and the question still runs on that day's anchors.
+
+### Question timing and fairness
+
+Every question follows the same daily shape, anchored to Europe/Zurich wall-clock in `services/schedule.ts`:
+
+```
+08:00  publish        question visible, voting opens
+12:00  voting closes  measurement window STARTS here
+24:00  race ends      measurement window ends, question resolves
+```
+
+**The voting window must never overlap the window being measured.** If they overlap, a late voter stops predicting and simply observes: under the old scheme (voting open for the full 24 h race) someone voting at hour 23 had seen 96% of the thing being measured and could just read off the answer. That also degrades the prediction heterogeneity the Expert Algorithm depends on.
+
+Consequences baked into the code:
+
+- The YouTube baseline is snapshotted by cron **when voting closes**, not when the pair is suggested — `youtube_suggestions.race_start_views_a/b`. Suggestion-time views (`video_a_views`) are kept only as display context.
+- `/admin/youtube/resolve` is a **tick**, not a one-shot resolve: it opens races whose `race_starts_at` has passed and closes races whose `race_ends_at` has passed. Both halves are idempotent.
+- Both boundary snapshots record the instant they were actually taken (`race_start_at` / `race_end_at`), so the true window length is auditable rather than assumed. Cron slop lengthens the window but cannot favour an option — both videos are read in a single API call.
+- SMI voting closes at 12:00 rather than at the 17:30 market close, so the 12:00–17:30 stretch of the trading day is never observable to voters. **Residual leak:** voters still see 09:00–12:00 trading, roughly 35% of the measured day. Closing that fully would require an intraday quote to re-anchor the question to the 12:00 level, which the current daily-close provider chain can't supply (see `services/smiService.ts`).
+- `GET /api/questions` filters on `published_at <= now`, so a question approved ahead of its slot stays hidden until 08:00.
+
+**Timestamps are ISO-8601 strings; never compare them against `datetime('now')`.** SQLite compares TEXT lexicographically, and ISO's `'T'` (0x54) sorts above the space (0x20) in `datetime('now')`'s output — so `deadline < datetime('now')` stays false until the UTC *date* rolls over. Bind `new Date().toISOString()` as a parameter instead.
 
 ## Architecture
 

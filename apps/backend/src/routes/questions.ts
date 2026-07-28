@@ -9,14 +9,17 @@ export async function questionRoutes(app: FastifyInstance) {
       const userId = request.user.userId
       const now = new Date().toISOString()
 
-      // Only open questions (deadline in the future); past questions belong in History
+      // Only open questions (deadline in the future); past questions belong in History.
+      // published_at gates questions approved ahead of their slot; rows predating the
+      // column have it NULL and stay visible as before.
       const questions = app.db
         .prepare(
           `SELECT * FROM questions
            WHERE deadline > ?
+             AND (published_at IS NULL OR published_at <= ?)
            ORDER BY deadline ASC`,
         )
-        .all(now) as QuestionRow[]
+        .all(now, now) as QuestionRow[]
 
       const enriched = questions.map((q) => {
         const vote = app.db
