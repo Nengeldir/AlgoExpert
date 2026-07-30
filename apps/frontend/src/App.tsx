@@ -44,13 +44,17 @@ const NAV_ITEMS = [
   { to: '/today', icon: 'today', label: "Today's Questions", shortLabel: 'Today' },
   { to: '/history', icon: 'history', label: 'Answer History', shortLabel: 'History' },
   { to: '/settings', icon: 'settings', label: 'Settings', shortLabel: 'Settings' },
-  {
-    to: '/admin/questions',
-    icon: 'admin_panel_settings',
-    label: 'Admin View',
-    shortLabel: 'Admin',
-  },
 ]
+
+/* Admin is not part of the participant-facing nav — it only appears once an
+   admin token has been accepted. Reaching it the first time means navigating
+   to /admin/login by hand, which keeps the UI unambiguous for participants. */
+const ADMIN_NAV_ITEM = {
+  to: '/admin/questions',
+  icon: 'admin_panel_settings',
+  label: 'Admin View',
+  shortLabel: 'Admin',
+}
 
 /* App shell: desktop sidebar + mobile top bar + mobile bottom nav.
    Logout is always red and bottom-right; the bottom nav is a single shared
@@ -60,6 +64,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const userLoggedIn = isLoggedIn()
   const adminLoggedIn = isAdminLoggedIn()
+  const navItems = adminLoggedIn ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
 
   function handleLogout() {
     clearToken()
@@ -93,7 +98,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         </NavLink>
 
         <div className="sidebar__nav">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} className="sidebar__link">
               <Icon name={item.icon} />
               {item.label}
@@ -127,7 +132,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       <main className="app-main">{children}</main>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} className="bottom-nav__tab">
             <Icon name={item.icon} />
             {item.shortLabel}
