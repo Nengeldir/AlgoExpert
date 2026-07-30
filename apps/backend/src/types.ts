@@ -59,6 +59,8 @@ export interface QuestionRow {
   race_ends_at: string | null
   resolved_at: string | null
   ground_truth: 'A' | 'B' | null
+  /** When the new-question announcement dispatcher processed this question */
+  notified_at: string | null
   created_at: string
 }
 

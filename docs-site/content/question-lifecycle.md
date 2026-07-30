@@ -60,6 +60,13 @@ videos are read in a single API call.
 **Questions approved ahead of their slot stay hidden.** `GET /api/questions` filters on
 `published_at <= now`, so approving at 07:00 does not leak the question before 08:00.
 
+**The "new question" email is a cron tick too**, for the same reason: it fires when the
+question becomes visible, not when it was created. Announcing at creation time would leak
+a question ahead of its slot, and would also arrive at whatever hour you happened to click
+**Approve**. `POST /admin/notifications/dispatch` runs every five minutes, uses the same
+`published_at <= now AND deadline > now` window as the student-facing endpoint, and records
+`questions.notified_at` so nobody is emailed twice.
+
 ## The SMI question and its residual leak
 
 SMI voting closes at **12:00**, not at the 17:30 market close. That keeps the

@@ -90,7 +90,7 @@ password_resets     (id, user_id FK, token_hash, expires_at, used_at, created_at
 questions           (id, title, description, option_a, option_b, image_url,
                      option_a_image, option_b_image, option_a_views, option_b_views,
                      deadline, published_at, race_starts_at, race_ends_at,
-                     resolved_at, ground_truth, created_at)
+                     resolved_at, ground_truth, notified_at, created_at)
 votes               (id, user_id FK, question_id FK, choice, is_correct, voted_at)
                     UNIQUE(user_id, question_id)
 smi_questions       (id, question_date UNIQUE, question_id FK,
@@ -142,6 +142,31 @@ rolls over. Bind `new Date().toISOString()` as a parameter instead.
 
 Full rationale and the known residual leak in the SMI question:
 [operator handbook → question lifecycle](../docs-site/content/question-lifecycle.md).
+
+## Email notifications
+
+New-question announcements are dispatched by an idempotent cron endpoint
+(`POST /admin/notifications/dispatch` → `services/notifications.ts`), not as a side effect
+of creating the question. Three reasons, in order of importance:
+
+1. **Questions are created before they are published.** A YouTube pair can be approved at
+   07:00 for an 08:00 slot; SMI questions are created by the morning cron. Emailing at
+   creation time would announce a question that `GET /api/questions` still hides — and
+   would leak its content ahead of the slot.
+2. **The container may be asleep.** There are no in-process timers anywhere in this
+   backend, so "send at 08:00" has to be an endpoint somebody calls.
+3. **Retries and de-duplication need a ledger.** `questions.notified_at` is that ledger, so
+   a tight cron interval only shortens the announcement delay; it cannot double-send.
+
+Two properties worth preserving if this code is touched:
+
+- **One message per recipient**, via Resend's batch endpoint. A single email with many `to`
+  addresses would show every participant's address to everyone else, defeating the
+  pseudonymity the lecture relies on.
+- **A staleness cut-off** (24 h since publish): such questions are marked processed and
+  skipped. Without it, deploying the feature or restoring a backup announces every
+  still-open question that predates the column, and a cron outage produces announcements
+  that arrive minutes before voting closes.
 
 ## Data flow for the lecture
 

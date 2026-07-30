@@ -11,11 +11,11 @@ moves, so treat a surprise as a reason to check the source, not as a fact.
 | `JWT_SECRET` | backend | `change-me-in-production` | Changing it logs every student out |
 | `ADMIN_TOKEN` | backend | *(empty)* | The admin password. Compared as a plain bearer token |
 | `PORT` | backend | `3000` | Injected by Railway; do not set there |
-| `CORS_ORIGIN` | backend | `http://localhost:5173` | Also the base URL for password-reset links |
+| `CORS_ORIGIN` | backend | `http://localhost:5173` | Also the base URL for password-reset links and new-question emails |
 | `LOG_LEVEL` | backend | `info` | Fastify log level |
 | `YOUTUBE_API_KEY` | backend | *(none)* | YouTube endpoints return `503` without it |
-| `RESEND_API_KEY` | backend | *(none)* | Without it, reset links are logged to console |
-| `EMAIL_FROM` | backend | — | Sender for reset emails |
+| `RESEND_API_KEY` | backend | *(none)* | Without it, reset links and new-question emails are logged instead of sent |
+| `EMAIL_FROM` | backend | — | Sender for all outgoing email |
 | `VITE_API_URL` | frontend | *(empty)* | **Build-time only.** Empty uses the dev proxy |
 
 > **Note:** `.env.example` also contains `FINANCIAL_MODELLING_PREP_API_KEY`. No code
@@ -73,6 +73,7 @@ Require `Authorization: Bearer <ADMIN_TOKEN>`. A wrong or missing token gives `4
 | `POST` | `/admin/youtube/resolve` | The race tick: snapshot baselines, close finished races |
 | `POST` | `/admin/smi/daily` | Create today's SMI question |
 | `POST` | `/admin/smi/resolve` | Resolve expired SMI questions |
+| `POST` | `/admin/notifications/dispatch` | Email opted-in participants about newly published questions |
 
 `POST /admin/questions` body:
 
@@ -100,7 +101,7 @@ SQLite in WAL mode, foreign keys on.
 **`questions`** — `id`, `title`, `description`, `option_a`, `option_b`, `image_url`,
 `deadline`, `resolved_at`, `ground_truth` (`'A'`/`'B'`/null), `created_at`, plus
 `option_a_image`, `option_b_image`, `option_a_views`, `option_b_views`, `published_at`,
-`race_starts_at`, `race_ends_at`.
+`race_starts_at`, `race_ends_at`, `notified_at`.
 
 **`votes`** — `id`, `user_id`, `question_id`, `choice` (`'A'`/`'B'`), `is_correct`
 (null until resolved, then 0/1), `voted_at`. Unique on `(user_id, question_id)`, which is
@@ -178,6 +179,7 @@ Where to look when the answer is not in this handbook.
 | What are the daily anchors? | `apps/backend/src/services/schedule.ts` |
 | How does the SMI job work? | `apps/backend/src/services/smiService.ts` |
 | How does the YouTube race work? | `apps/backend/src/services/youtubeResolver.ts` |
+| Who gets a new-question email, and when? | `apps/backend/src/services/notifications.ts` |
 | What is the database schema? | `apps/backend/src/db/migrate.ts` |
 | How does admin auth work? | `apps/backend/src/plugins/authenticate.ts` |
 | What does the admin UI do? | `apps/frontend/src/pages/AdminQuestions.tsx` |

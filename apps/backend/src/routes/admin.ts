@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { requireAdmin } from '../plugins/authenticate'
+import { dispatchNewQuestionEmails } from '../services/notifications'
 import type { QuestionRow } from '../types'
 
 interface CreateQuestionBody {
@@ -198,6 +199,17 @@ export async function adminRoutes(app: FastifyInstance) {
         .all(questionId) as QuestionVoteRow[]
 
       return reply.send({ votes })
+    },
+  })
+
+  // POST /admin/notifications/dispatch — email opted-in participants about questions that
+  // have gone live since the last call. Idempotent, so call it every few minutes from an
+  // external cron service; it does no work (and sends nothing) when there is nothing new.
+  app.post('/notifications/dispatch', {
+    handler: async (_request, reply) => {
+      const messages: string[] = []
+      const notified = await dispatchNewQuestionEmails(app.db, (msg) => messages.push(msg))
+      return reply.send({ ok: true, notified, log: messages })
     },
   })
 

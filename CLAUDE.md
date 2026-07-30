@@ -60,9 +60,9 @@ curl -H "Authorization: Bearer dev-admin-token" "http://localhost:3000/admin/exp
 
 ### Cron jobs (production — cron-job.org)
 
-All automated question creation and resolution is driven by external HTTP cron jobs rather than in-process timers, so the Railway container can sleep between requests.
+All automated question creation, resolution, and participant notification is driven by external HTTP cron jobs rather than in-process timers, so the Railway container can sleep between requests.
 
-All three jobs use:
+All four jobs use:
 - **Method:** `POST`
 - **Header:** `Authorization: Bearer <ADMIN_TOKEN>` (the value set in Railway's environment variables)
 
@@ -71,6 +71,7 @@ All three jobs use:
 | SMI — create question | `/admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET (UTC+1). Change to `0 6 * * 1-5` during CEST (UTC+2, late Mar – late Oct) |
 | SMI — resolve question | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET. Change to `30 15 * * 1-5` during CEST |
 | YouTube — race tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Drives **both** ends of the race (see below) |
+| Notify — new questions | `/admin/notifications/dispatch` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Emails participants once a question is actually visible |
 
 **SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer. The simplest workaround is to run both UTC offset schedules year-round — all endpoints are idempotent so duplicate calls are harmless.
 
@@ -144,11 +145,15 @@ fails if `content/` and the nav disagree, and it verifies every internal link re
 | `routes/questions.ts` | `GET /api/questions` — enriched with per-user vote status |
 | `routes/votes.ts` | `POST /api/votes` |
 | `routes/history.ts` | `GET /api/history` — past questions with own vote only |
-| `routes/admin.ts` | `POST /admin/questions`, `POST /admin/questions/:id/resolve`, `GET /admin/export`, `GET /admin/questions` |
+| `routes/admin.ts` | `POST /admin/questions`, `POST /admin/questions/:id/resolve`, `GET /admin/export`, `GET /admin/questions`, `POST /admin/notifications/dispatch` |
+| `services/email.ts` | Resend transport: `sendPasswordResetEmail`, `sendBatchEmails` (one message per recipient — never one email with many `to`) |
+| `services/notifications.ts` | `dispatchNewQuestionEmails` — announces newly visible questions to opted-in users |
 
 **Auth flow:** `POST /api/auth/register` (pseudonym + email + password) → bcrypt hash → JWT (30 d). `POST /api/auth/login` takes `{ identifier, password }`, where `identifier` matches either `pseudonym` or `email` (`WHERE pseudonym = ? OR email = ?`). Email is never shown publicly — it exists only for login/recovery, to preserve the pseudonymous identity used in lecture. All `/api/*` routes use `preHandler: [app.authenticate]`. All `/admin/*` routes use `addHook('preHandler', requireAdmin)` which checks the `Authorization: Bearer <ADMIN_TOKEN>` header against the env var.
 
 **Password reset:** `POST /api/auth/forgot-password { email }` always returns a generic 200 (no user enumeration); if the email matches an account it emails a one-time link via `services/email.ts` (Resend API, `RESEND_API_KEY`/`EMAIL_FROM` env vars — falls back to logging the link to the console when `RESEND_API_KEY` is unset, so local dev needs no email account). The link points at `${CORS_ORIGIN}/reset-password?token=...`; `POST /api/auth/reset-password { token, password }` looks up the SHA-256 hash of the token in `password_resets`, rejects if missing/expired/used, otherwise updates `password_hash` and marks the token used. Tokens expire after 1 hour.
+
+**New-question notifications:** `POST /admin/notifications/dispatch` (→ `services/notifications.ts`) emails every user with `email_notifications = 1` about questions that are visible (`published_at <= now`) and still open (`deadline > now`), then stamps `questions.notified_at`. It is a cron tick, not a side effect of question creation, because questions are created *before* their 08:00 publish slot — announcing at creation would leak the question early and fire at whatever hour the admin clicked. Two invariants: send **one message per recipient** (Resend's batch endpoint — a single email with many `to` addresses would expose every participant's address), and **skip questions published more than 24 h ago** by marking them notified without sending, so a first deploy or a cron outage cannot blast stale announcements. A send failure leaves `notified_at` NULL for the next tick to retry.
 
 **SQLite schema:** `users`, `password_resets`, `questions`, `votes` (plus `smi_questions`/`youtube_suggestions` for automated question sources). `votes.is_correct` is `NULL` until resolved, then `0|1`. The resolve endpoint runs a transaction that sets `ground_truth` on the question and bulk-updates `is_correct` on all votes in one shot.
 

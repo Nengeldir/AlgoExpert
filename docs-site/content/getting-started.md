@@ -53,7 +53,7 @@ can skip them locally:
 | Key | Needed for | If missing |
 |---|---|---|
 | `YOUTUBE_API_KEY` | Generating and resolving YouTube race questions | Those endpoints return `503`; everything else works |
-| `RESEND_API_KEY` | Sending password-reset emails | Reset links are printed to the backend console instead — fine for local testing |
+| `RESEND_API_KEY` | Sending password-reset and new-question emails | The links and recipients are printed to the backend console instead — fine for local testing |
 
 The SMI question source needs **no key** — it reads public endpoints.
 

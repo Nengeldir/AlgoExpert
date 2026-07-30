@@ -38,14 +38,14 @@ Set these in the Railway service's **Variables** tab:
 | `ADMIN_TOKEN` | A long random string. This is the admin password |
 | `CORS_ORIGIN` | The frontend's public URL, e.g. `https://your-frontend.up.railway.app` |
 | `YOUTUBE_API_KEY` | From Google Cloud Console |
-| `RESEND_API_KEY` | From resend.com — required for password-reset emails |
+| `RESEND_API_KEY` | From resend.com — required for password-reset and new-question emails |
 | `EMAIL_FROM` | e.g. `Expert Vote <noreply@yourdomain>` |
 
 `PORT` is injected by Railway; do not set it. `LOG_LEVEL` defaults to `info`.
 
-> **Warning:** `CORS_ORIGIN` does double duty — it is also the base URL used to build
-> password-reset links. If it is wrong, reset emails point students at the wrong host and
-> the links are dead.
+> **Warning:** `CORS_ORIGIN` does double duty — it is also the base URL used to build the
+> links in outgoing email, both password resets and new-question announcements. If it is
+> wrong, those emails point students at the wrong host and the links are dead.
 
 ### Health check and tests
 

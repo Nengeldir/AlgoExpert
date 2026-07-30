@@ -95,7 +95,7 @@ In the Railway backend service's Variables tab:
 - **`JWT_SECRET`** — changing it invalidates every student session. Harmless when you
   have just wiped the accounts anyway.
 
-Then update the `Authorization` header on all three cron jobs to the new admin token, or
+Then update the `Authorization` header on all four cron jobs to the new admin token, or
 they will start returning `403`. This is the step most likely to be forgotten.
 
 ## Checklist for the new semester

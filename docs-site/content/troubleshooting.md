@@ -111,6 +111,37 @@ matches an account. That is deliberate — it prevents anyone probing which emai
 registered — but it does mean "I got the confirmation" is not evidence the address was
 correct.
 
+## Nobody was emailed about today's question
+
+Work down this list — the causes are ordered by how often they are the answer.
+
+**Is the notification cron job configured?** `POST /admin/notifications/dispatch` is what
+sends the announcements, and it is a separate job from the SMI and YouTube ones. Call it by
+hand; the response tells you what it did:
+
+```bash
+curl -X POST https://your-backend.up.railway.app/admin/notifications/dispatch \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+**Is `RESEND_API_KEY` set?** Without it the dispatcher reports success and lists the
+recipients in its `log` array without sending anything. Look for
+`(not sent — RESEND_API_KEY unset)`.
+
+**Was the question published more than 24 hours ago?** Those are marked as processed and
+deliberately skipped — the log says `skipped — published more than 24 h ago`, and the
+outcome carries `"skipped": "stale"`. An announcement that arrives after voting has nearly
+closed is worse than none.
+
+**Has voting already closed?** Only questions with `deadline > now` are announced. If the
+cron has been down since before 12:00, today's question will never be emailed about.
+
+**Did the students turn it off?** The Settings page has an *Email notifications* switch,
+default on. Only accounts with it on receive announcements.
+
+Note that `notified_at` is a per-*question* ledger, not per-recipient: someone who
+registers after the announcement went out is not backfilled.
+
 ## A student says their vote is missing
 
 **Did they actually submit?** Voting is one-shot: the API rejects a second vote with

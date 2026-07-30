@@ -15,9 +15,9 @@ debugging. The cost is one more service to configure — this page.
 [cron-job.org](https://cron-job.org) is free and sufficient. Any scheduler that can send
 an authenticated POST works equally well.
 
-## The three jobs
+## The four jobs
 
-All three use **method `POST`** and the header:
+All four use **method `POST`** and the header:
 
 ```text
 Authorization: Bearer <your ADMIN_TOKEN>
@@ -31,6 +31,7 @@ default.
 | SMI — create | `/admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET, weekdays |
 | SMI — resolve | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET, weekdays |
 | YouTube — tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 minutes, all week |
+| Notify — new questions | `/admin/notifications/dispatch` | `*/5 * * * *` | Every 5 minutes, all week |
 
 Prefix each path with your backend's public URL, e.g.
 `https://your-backend.up.railway.app/admin/smi/daily`.
@@ -38,6 +39,10 @@ Prefix each path with your backend's public URL, e.g.
 > **Note:** The YouTube job drives **both** ends of the race — it snapshots baselines at
 > 12:00 and resolves at 24:00. It is not "the resolve job" despite the URL. Running it
 > every five minutes keeps the real measured window close to the nominal twelve hours.
+
+> **Note:** The notification job is what emails participants that a question is open.
+> Without it, questions still publish on time but nobody is told. It is a separate job
+> because it has to fire *after* the 08:00 publish, not when the question was created.
 
 YouTube question *creation* stays manual on purpose; see
 [Admin console → The YouTube panel](admin-console.html#the-youtube-panel).
@@ -56,7 +61,7 @@ The SMI jobs are the ones affected:
 | SMI — create | `0 7 * * 1-5` | `0 6 * * 1-5` |
 | SMI — resolve | `30 16 * * 1-5` | `30 15 * * 1-5` |
 
-The YouTube tick runs every five minutes, so it is timezone-agnostic.
+The YouTube and notification ticks run every five minutes, so they are timezone-agnostic.
 
 **The simplest fix is to run both variants year-round.** Create four SMI jobs instead of
 two — the winter pair and the summer pair — and leave them all enabled. Every endpoint is
@@ -74,7 +79,7 @@ forgotten.
 
 Do this immediately after setup rather than discovering a problem a week in.
 
-**1. Call each endpoint by hand.** All three return `200` with a `log` array describing
+**1. Call each endpoint by hand.** All four return `200` with a `log` array describing
 what they did:
 
 ```bash
@@ -118,6 +123,32 @@ baseline yet gets its two view counts snapshotted. Second, any question whose
 the deltas, resolve to the larger. Exact ties are skipped and retried next tick.
 
 Both halves need `YOUTUBE_API_KEY`; without it the endpoint returns `503`.
+
+### `POST /admin/notifications/dispatch`
+
+Finds questions that are visible (`published_at <= now`) and still open
+(`deadline > now`) and have not been announced yet, then emails every participant who has
+email notifications switched on — one message per recipient, so no participant sees
+another's address. It records `questions.notified_at` afterwards, which is what makes
+repeat calls harmless.
+
+Two deliberate silences:
+
+- A question **published more than 24 hours ago** is marked as processed and *not* emailed.
+  This is what stops a first deployment, a restored backup, or a multi-day cron outage from
+  blasting stale announcements.
+- With no `RESEND_API_KEY` set, the intended recipients are written to the `log` array
+  instead of being emailed. Useful locally; a silent failure in production.
+
+```json
+{
+  "ok": true,
+  "notified": [{ "question_id": 42, "title": "SMI: Higher close today?", "recipients": 31 }],
+  "log": ["[notify] question 42 announced to 31 recipient(s)"]
+}
+```
+
+If a send fails, `notified_at` stays `NULL` and the next tick retries that question.
 
 ## Cost note
 

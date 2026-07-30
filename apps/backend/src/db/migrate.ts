@@ -115,6 +115,11 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
     'ALTER TABLE youtube_suggestions ADD COLUMN race_end_views_a INTEGER',
     'ALTER TABLE youtube_suggestions ADD COLUMN race_end_views_b INTEGER',
     'ALTER TABLE youtube_suggestions ADD COLUMN race_end_at TEXT',
+    // When the "new question" announcement dispatcher last processed this question. Set
+    // whether or not mails went out (a question published too long ago is marked and
+    // skipped), so it reads as "the notifier is done with this row" — see
+    // services/notifications.ts.
+    'ALTER TABLE questions ADD COLUMN notified_at TEXT',
   ]
   for (const sql of alterations) {
     try {

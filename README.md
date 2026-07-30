@@ -162,7 +162,7 @@ curl -H "Authorization: Bearer dev-admin-token" http://localhost:3000/admin/ques
 
 ## Automated Question Lifecycle (Production)
 
-In production on Railway, there are no in-process timers — the container can sleep between requests. Instead, three HTTP cron jobs on [cron-job.org](https://cron-job.org) (free) drive question creation and resolution.
+In production on Railway, there are no in-process timers — the container can sleep between requests. Instead, four HTTP cron jobs on [cron-job.org](https://cron-job.org) (free) drive question creation, resolution, and participant notification.
 
 ### How to set up on cron-job.org
 
@@ -179,6 +179,7 @@ In production on Railway, there are no in-process timers — the container can s
 | SMI — create question | `POST /admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET Mon–Fri |
 | SMI — resolve question | `POST /admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET Mon–Fri |
 | YouTube — race tick | `POST /admin/youtube/resolve` | `*/5 * * * *` | Every 5 minutes |
+| Notify — new questions | `POST /admin/notifications/dispatch` | `*/5 * * * *` | Every 5 minutes |
 
 **SMI timezone:** Switzerland uses CET (UTC+1) in winter and CEST (UTC+2) in summer (late March – late October). During summer, change the SMI schedules to `0 6 * * 1-5` and `30 15 * * 1-5`. Alternatively, keep both variants active year-round — all endpoints are idempotent so a duplicate call does nothing.
 
@@ -187,6 +188,7 @@ In production on Railway, there are no in-process timers — the container can s
 - **`/admin/smi/daily`** — fetches the previous SMI close (Yahoo Finance, with Stooq as a fallback) and creates today's question, published at 08:00 with voting closing at 12:00. Skips weekends, days where a question already exists, and any run late enough that voting would already be closed.
 - **`/admin/smi/resolve`** — fetches the day's closing price and resolves the question as A (higher) or B (flat/lower). Waits until after 18:00 Zurich for today's question. Skips if market data is not yet available. Removes past questions with no data at all, which is almost always a public holiday.
 - **`/admin/youtube/resolve`** — a **tick**, not a one-shot resolve. Each call snapshots baseline view counts for races whose 12:00 window has just opened, and closes out races whose 24:00 window has ended. Both halves are idempotent, which is why it runs every 5 minutes: a tighter interval keeps the real measured window closer to the nominal 12 hours. Exact ties are left pending and retried on the next tick.
+- **`/admin/notifications/dispatch`** — emails every participant who has email notifications enabled (the default) that a question is open, one message per recipient so no address is exposed to anyone else. It announces questions that are visible (`published_at <= now`) and still open (`deadline > now`), then stamps `questions.notified_at` so repeat calls send nothing. A question published more than 24 h ago is marked and skipped rather than announced late — that is what keeps a first deployment or a cron outage from blasting stale mail. Needs `RESEND_API_KEY`; without it the recipients are logged instead.
 
 ### YouTube question creation (manual)
 
