@@ -11,8 +11,8 @@ ENV HUSKY=0
 
 # docs-site is deliberately NOT an npm workspace of the root package, so it installs
 # on its own and cannot disturb the backend/frontend lockfile.
-COPY docs-site/package.json docs-site/package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund
+COPY docs-site/package.json docs-site/package-lock.json ./
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY docs-site/ ./
 RUN npm run build

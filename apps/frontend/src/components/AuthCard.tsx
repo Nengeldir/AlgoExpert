@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom'
-import { Icon } from '../App'
 import Logo from './Logo'
 
 /* Shared authentication card (login_sign_up template):
@@ -41,10 +40,6 @@ export default function AuthCard({
             </nav>
           )}
           {children}
-          <div className="auth-footer">
-            <Icon name="verified_user" className="icon--sm" />
-            Secure ETH Zurich Authentication
-          </div>
         </div>
       </div>
     </div>
