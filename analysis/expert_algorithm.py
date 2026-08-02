@@ -29,6 +29,11 @@ class Round:
     label: str
     truth: Choice
     votes: dict[str, Choice]  # pseudonym -> "A" | "B"; absentees simply absent
+    # pseudonym -> True if this was a real cast vote, False if filled in on the
+    # expert's behalf (e.g. loader.py's 50/50 coin flip for a non-voter).
+    # A pseudonym missing from this dict is assumed manual, so hand-built
+    # Round()s in tests and scripts don't need to care about it.
+    manual: dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -41,6 +46,7 @@ class RoundResult:
     truth: Choice
 
     n_voters: int
+    n_manual: int  # of n_voters, how many actually cast a vote (rest were filled)
     weight_participating: float  # W_t, restricted to those who voted
     weight_correct: float  # C_t
 
@@ -59,6 +65,7 @@ class RoundResult:
 class ExpertStats:
     pseudonym: str
     answered: int
+    manual_answered: int  # of `answered`, how many were real votes (not filled)
     correct: int
     rate_over_all_rounds: float  # correct / D   <- the slides' definition
     rate_over_answered: float  # correct / answered
@@ -141,11 +148,24 @@ class Run:
 
     @property
     def participation(self) -> float:
-        """Fraction of (expert, round) cells that carry an actual vote."""
+        """Fraction of (expert, round) cells that carry a vote, manual or filled.
+
+        With loader.py's fill-in policy this is normally 100%: every known
+        expert gets *some* vote every round, real or a 50/50 coin flip. Use
+        `manual_participation` for the number that reflects actual engagement.
+        """
         cells = self.n_experts * self.n_rounds
         if cells == 0:
             return 0.0
         return sum(r.n_voters for r in self.rounds) / cells
+
+    @property
+    def manual_participation(self) -> float:
+        """Fraction of (expert, round) cells that carry a real, cast vote."""
+        cells = self.n_experts * self.n_rounds
+        if cells == 0:
+            return 0.0
+        return sum(r.n_manual for r in self.rounds) / cells
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +189,11 @@ def run_expert_algorithm(
     Absentees (the "sleeping expert" case): an expert with no vote in a round
     contributes no weight to that round and has their weight left untouched.
     W_t is the weight of the *participants only*, so p_t stays an honest
-    probability even when half the class skipped the question.
+    probability even when half the class skipped the question. This only
+    matters if you hand-build `Round`s with gaps -- loader.py's normal
+    pipeline fills every gap with a random 50/50 pick before it gets here, so
+    there are no true absentees left; `Round.manual` records which votes were
+    real so the fills can still be told apart afterwards.
     """
     if growth_rate <= 0:
         raise ValueError(f"growth rate G must be positive, got {growth_rate}")
@@ -190,6 +214,7 @@ def run_expert_algorithm(
     results: list[RoundResult] = []
     skipped: list[str] = []
     answered = {e: 0 for e in experts}
+    manual_answered = {e: 0 for e in experts}
     correct_count = {e: 0 for e in experts}
 
     for rnd in rounds:
@@ -209,6 +234,7 @@ def run_expert_algorithm(
 
         n_a = sum(1 for c in votes.values() if c == "A")
         n_b = len(votes) - n_a
+        n_manual = sum(1 for p in votes if rnd.manual.get(p, True))
 
         weighted_majority = _argmax_choice(w_a, w_b, tie_break)
         unweighted_majority = _argmax_choice(n_a, n_b, tie_break)
@@ -220,6 +246,7 @@ def run_expert_algorithm(
                 label=rnd.label,
                 truth=rnd.truth,
                 n_voters=len(votes),
+                n_manual=n_manual,
                 weight_participating=w_participating,
                 weight_correct=w_correct,
                 # p_t uses the weights *entering* the round, before the update.
@@ -234,6 +261,8 @@ def run_expert_algorithm(
 
         for p, c in votes.items():
             answered[p] += 1
+            if rnd.manual.get(p, True):
+                manual_answered[p] += 1
             if c == rnd.truth:
                 correct_count[p] += 1
                 weights[p] *= 1 + growth_rate
@@ -247,6 +276,7 @@ def run_expert_algorithm(
         ExpertStats(
             pseudonym=e,
             answered=answered[e],
+            manual_answered=manual_answered[e],
             correct=correct_count[e],
             rate_over_all_rounds=correct_count[e] / n_rounds if n_rounds else 0.0,
             rate_over_answered=correct_count[e] / answered[e] if answered[e] else 0.0,

@@ -188,6 +188,10 @@ def test_empirical_optimum_need_not_match_the_bound_optimum():
 
 
 def test_absent_experts_are_neither_penalised_nor_counted():
+    """This is the low-level primitive, exercised with hand-built `Round`s that
+    have real gaps. `loader.py`'s normal pipeline never produces such gaps any
+    more -- it fills them with a 50/50 pick before `Round`s are built -- but
+    the algorithm still supports true absence for direct callers."""
     rounds = [
         Round("1", "q1", "A", {"Present": "A", "Absent": "B"}),
         Round("2", "q2", "A", {"Present": "B"}),  # Absent sits this one out
@@ -319,6 +323,83 @@ def test_participation_filter_drops_sparse_experts():
     rounds, experts, report = load_votes(str(FIXTURE), min_participation=0.8)
     assert len(experts) == 7  # everyone in the fixture is fully present
     assert report.n_experts == 7
+
+
+def _write_csv(text: str) -> str:
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False) as fh:
+        fh.write(text)
+        return fh.name
+
+
+def test_non_voters_are_filled_with_a_coin_flip_and_tagged_auto():
+    """Bernd & Luca's policy: a student who skips a day is not dropped from
+    the round -- a coin is flipped for them and the fill is tagged
+    manual=False so it can always be told apart from a real vote."""
+    csv = (
+        "question_id,deadline,pseudonym,question_title,ground_truth,user_vote\n"
+        "1,2026-03-01T00:00:00Z,Ann,Day 1,A,A\n"
+        "1,2026-03-01T00:00:00Z,Bob,Day 1,A,B\n"
+        "2,2026-03-02T00:00:00Z,Ann,Day 2,B,B\n"  # Bob sits day 2 out
+    )
+    rounds, experts, report = load_votes(_write_csv(csv), fill_seed=1)
+
+    assert experts == ["Ann", "Bob"]
+    day2 = next(r for r in rounds if r.question_id == "2")
+    assert set(day2.votes) == {"Ann", "Bob"}  # Bob now has a vote
+    assert day2.manual == {"Ann": True, "Bob": False}
+    assert day2.votes["Bob"] in ("A", "B")
+    assert report.n_filled == 1
+    assert any("filled 1" in note for note in report.warnings)
+
+
+def test_fill_is_reproducible_given_the_same_seed():
+    csv = (
+        "question_id,deadline,pseudonym,question_title,ground_truth,user_vote\n"
+        "1,2026-03-01T00:00:00Z,Ann,Day 1,A,A\n"
+        "2,2026-03-02T00:00:00Z,Bob,Day 2,B,B\n"
+    )
+    path = _write_csv(csv)
+    r1, _, _ = load_votes(path, fill_seed=42)
+    r2, _, _ = load_votes(path, fill_seed=42)
+    r3, _, _ = load_votes(path, fill_seed=43)
+
+    assert [r.votes for r in r1] == [r.votes for r in r2]
+    # not asserting r1 != r3: a different seed *can* land on the same flips,
+    # this just checks same-seed determinism above.
+
+
+def test_participation_filter_runs_before_the_fill():
+    """A sparse expert must be dropped by --min-participation on their *real*
+    engagement -- if the filter ran after filling, everyone would look 100%
+    present and the filter would never remove anyone."""
+    rows = ["question_id,deadline,pseudonym,question_title,ground_truth,user_vote"]
+    for day in range(1, 6):
+        rows.append(f"{day},2026-03-{day:02d}T00:00:00Z,Regular,Day {day},A,A")
+    rows.append("1,2026-03-01T00:00:00Z,Sparse,Day 1,A,A")  # Sparse votes once
+    path = _write_csv("\n".join(rows) + "\n")
+
+    rounds, experts, report = load_votes(path, min_participation=0.8)
+    assert experts == ["Regular"]
+    assert all("Sparse" not in r.votes for r in rounds)
+
+
+def test_manual_participation_reflects_real_votes_only():
+    rounds = [
+        Round("1", "q1", "A", {"A1": "A", "A2": "A"}, manual={"A1": True, "A2": False}),
+        Round("2", "q2", "A", {"A1": "A", "A2": "B"}, manual={"A1": True, "A2": True}),
+    ]
+    run = run_expert_algorithm(rounds, growth_rate=1.0)
+
+    assert run.rounds[0].n_manual == 1
+    assert run.rounds[1].n_manual == 2
+    assert approx(run.manual_participation, 3 / 4, CLOSE)
+    assert approx(run.participation, 1.0, CLOSE)
+
+    a2 = next(s for s in run.expert_stats if s.pseudonym == "A2")
+    assert a2.answered == 2
+    assert a2.manual_answered == 1
 
 
 # ---------------------------------------------------------------------------

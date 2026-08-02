@@ -67,13 +67,14 @@ deleting the question, which also deletes its votes.
 
 ## Students who do not vote
 
-They are treated as **abstaining**, not as wrong. A missing vote is simply absent from
-the data; the analysis calls these "sleeping experts" and does not penalise their
-weight.
+A missing vote is not treated as wrong, but it is not left out of the round either: the
+analysis flips a coin on the student's behalf (uniform 50/50) and records that as their
+vote for that round, tagged as a fill rather than a real vote.
 
-This matters for how you talk to the class: a student who votes only when confident is
-not disadvantaged by the algorithm. It also means participation rate is a number worth
-reporting alongside the headline result — see [Lecture day](lecture-day.html).
+This matters for how you talk to the class: the fill is recorded separately from real
+votes at every level of the export, so "manual participation" — the share of votes that
+were actually cast — is a number worth reporting alongside the headline result, distinct
+from the (now normally 100%) coverage number. See [Lecture day](lecture-day.html).
 
 ## Things you should not do
 

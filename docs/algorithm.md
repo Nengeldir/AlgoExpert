@@ -59,20 +59,42 @@ live lecture session:
 
 ## Policy for missing votes
 
-Students who did not vote are treated as **abstaining** ("sleeping experts"):
+Agreed with Bernd: a student who did not vote is not dropped from the round.
+`analysis/loader.py` flips a coin on their behalf (uniform 50/50 over A/B) and
+files the result as their vote for that round, so `W` and `C` cover every
+known expert, every round, with no true absentees left by the time
+`run_expert_algorithm` sees the data.
 
-- their weight is **not** penalised for the missed round
-- they contribute zero weight to that round, and `W` counts participants only
+Every vote is tagged so the fill can always be told apart from the real
+thing: `Round.manual[pseudonym]` is `True` for a vote the student actually
+cast and `False` for a coin flip filled in on their behalf. This propagates
+through the whole pipeline — `RoundResult.n_manual`, `ExpertStats.
+manual_answered`, `Run.manual_participation` — and into `rounds.csv`
+(`manual_voters`) and `experts.csv` (`manual_answered`), so a filled vote is
+never silently indistinguishable from a real one in the exported data.
 
-**Rationale**: penalising absence would rank students by participation rather
-than prediction quality. A student who votes only when confident should not be
-punished for selective participation.
+**Rationale**: this keeps the class's colloquial framing — "if you don't
+vote, the algorithm votes for you" — and sidesteps the awkwardness of
+`rate_over_all_rounds` vs. `rate_over_answered` diverging for students with
+patchy attendance, since after filling everyone has answered every round.
+What it costs is prediction quality: a coin flip is uninformative by
+construction, so a student with several absences has their true skill diluted
+towards 50% in every rate computed over *all* rounds. Use `manual_answered`
+/ `manual_participation` to see how much of a given number rests on real
+votes versus filled ones, and treat a low manual-participation run the same
+way as before — as a prompt to re-run with `--min-participation 0.8` and
+check the headline still holds on students who actually showed up.
 
-The guarantee survives this, because `C = p·W_participating ≤ p·W_total` keeps
-`W_{t+1} ≤ W_t(1 + G·p_t)` intact. What changes is interpretation: `p` becomes
-the chance of being right *given someone answered*. Report the participation
-rate alongside the headline, and re-run restricted to students with high
-attendance as a robustness check.
+The guarantee survives this unchanged: filled votes are still real entries in
+`votes`, so `W_t` is still the weight of everyone who "voted" (manually or
+not) and the same `W_{t+1} ≤ W_t(1 + G·p_t)` chain applies — the fill just
+changes what the underlying `p_t` is estimating.
+
+`run_expert_algorithm` itself still supports true absence (a pseudonym simply
+missing from `Round.votes`, contributing no weight and left unpenalised) for
+callers that build `Round`s by hand rather than through the loader — see
+`analysis/test_expert_algorithm.py`. That primitive is what the loader's fill
+step is applied on top of, not a second, competing policy.
 
 ## How app data flows into the analysis
 
@@ -87,8 +109,8 @@ analysis/run.py votes.csv --sweep
       │
       ▼
   out/summary.txt   headline numbers + the guarantee check
-  out/rounds.csv    per-round table
-  out/experts.csv   per-expert record and final weight
+  out/rounds.csv    per-round table, incl. how many of that round's votes were real (`manual_voters`)
+  out/experts.csv   per-expert record and final weight, incl. how many were real votes (`manual_answered`)
   out/*.png         weight trajectories, cumulative rates, G sweep, leaderboard
 ```
 

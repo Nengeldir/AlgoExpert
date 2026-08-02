@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 import warnings
 from dataclasses import dataclass
 
@@ -22,6 +23,7 @@ class LoadReport:
     dropped_unresolved: int
     dropped_bad_choice: int
     dropped_duplicate: int
+    n_filled: int
     ordering: str
     warnings: list[str]
 
@@ -29,12 +31,21 @@ class LoadReport:
 def load_votes(
     path: str,
     min_participation: float = 0.0,
+    fill_seed: int = 0,
 ) -> tuple[list[Round], list[str], LoadReport]:
     """Read the export CSV and return (rounds, experts, report).
 
     `min_participation` keeps only experts who answered at least that fraction
     of the resolved questions -- use it for the robustness pass where every
-    expert is close to fully present.
+    expert is close to fully present. It is evaluated on *real* votes, before
+    the 50/50 fill below, so it still measures actual engagement.
+
+    Per the agreed class policy, an expert with no vote in a round is not
+    treated as absent: a coin is flipped on their behalf (uniform A/B) and the
+    result is recorded as their vote for that round, tagged `manual=False` so
+    it can always be told apart from a real cast vote (`manual=True`).
+    `fill_seed` makes that flip reproducible across re-runs of the same
+    export.
     """
     df = pd.read_csv(path, dtype=str, keep_default_na=False)
     n_raw = len(df)
@@ -133,7 +144,9 @@ def load_votes(
                 f"participation filter >={min_participation:.0%} removed every expert"
             )
 
-    # --- build rounds --------------------------------------------------------
+    # --- build rounds, filling non-voters with a random 50/50 pick ----------
+    rng = random.Random(fill_seed)
+    n_filled = 0
     rounds: list[Round] = []
     for qid, g in df.groupby(group_key, sort=False):
         truths = set(g["ground_truth"])
@@ -141,13 +154,30 @@ def load_votes(
             notes.append(f"question {qid!r} has conflicting ground truths {truths}; skipped")
             continue
         label = g["question_title"].iloc[0] if "question_title" in g.columns else str(qid)
+
+        votes = dict(zip(g["pseudonym"], g["user_vote"]))
+        manual = {p: True for p in votes}
+        for expert in experts:
+            if expert not in votes:
+                votes[expert] = rng.choice(("A", "B"))
+                manual[expert] = False
+                n_filled += 1
+
         rounds.append(
             Round(
                 question_id=str(qid),
                 label=str(label) or str(qid),
                 truth=truths.pop(),
-                votes=dict(zip(g["pseudonym"], g["user_vote"])),
+                votes=votes,
+                manual=manual,
             )
+        )
+
+    if n_filled:
+        cells = len(experts) * len(rounds)
+        notes.append(
+            f"filled {n_filled} of {cells} (expert, question) pair(s) with a random "
+            "50/50 pick for experts who did not vote (manual=False)"
         )
 
     report = LoadReport(
@@ -158,6 +188,7 @@ def load_votes(
         dropped_unresolved=dropped_unresolved,
         dropped_bad_choice=dropped_bad,
         dropped_duplicate=dropped_dupes,
+        n_filled=n_filled,
         ordering=ordering,
         warnings=notes,
     )

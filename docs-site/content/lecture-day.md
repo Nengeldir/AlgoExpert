@@ -106,17 +106,23 @@ behaviour, while the empirical curve knows what your students actually did.
 
 ## Absent students
 
-Students who did not vote are **sleeping experts**: they contribute no weight that round
-and are not penalised. `W` counts participants only.
+A student who did not vote is not dropped from the round: the loader flips a coin for
+them (uniform 50/50) and records that as their vote, tagged `manual=False` so it stays
+distinguishable from a real cast vote (`manual=True`). `rounds.csv` carries
+`manual_voters` next to `voters`, `experts.csv` carries `manual_answered` next to
+`answered`, and `summary.txt` reports **manual participation** — the share of votes that
+were real — separately from total coverage (normally 100%, since every gap gets filled).
 
 Two things to report honestly, because someone will ask:
 
-- **Best expert** is `correct / D` by default — the slides' definition, where an absence
-  counts against you. `experts.csv` also carries `rate_over_answered`. With patchy
-  attendance these two diverge a lot.
+- **A student's rate over "all rounds" now includes their coin flips**, which pulls it
+  towards 50% the more they were absent — that's the fill working as intended, but it
+  means a student with few `manual_answered` rounds has a rate that says more about the
+  coin than about them.
 - **Run the robustness pass.** `--min-participation 0.8` restricts to students who showed
-  up for most questions. If the headline survives, say so. If it does not, *that is the
-  finding* — present it either way.
+  up for most questions — evaluated on real votes, before the coin-flip fill. If the
+  headline survives, say so. If it does not, *that is the finding* — present it either
+  way.
 
 ## Round ordering
 

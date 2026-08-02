@@ -53,24 +53,26 @@ routinely beats its guarantee long before the guarantee is worth quoting.
 
 ## Absent students
 
-Students who didn't vote are treated as **sleeping experts**: they contribute no
-weight that round and their weight is not penalised. `W` counts participants
-only, so `p` stays an honest probability even when half the class skipped.
-
-The guarantee survives this. The chain still runs, because
-`C = p·W_participating ≤ p·W_total`, so `W_{t+1} ≤ W_t(1 + G·p_t)` as required,
-and the best expert's final weight is still `(1+G)^R`. What the renormalisation
-*does* change is interpretation: `p` is the chance of being right *given someone
-answered*, not the chance of having an answer to give at all.
+Agreed with Bernd: a student who didn't vote isn't dropped from the round —
+`loader.py` flips a coin for them (uniform 50/50) and records that as their
+vote, tagged `manual=False` so it's always distinguishable from a real cast
+vote (`manual=True`). `rounds.csv` carries `manual_voters` alongside `voters`,
+`experts.csv` carries `manual_answered` alongside `answered`, and
+`summary.txt` reports **manual participation** — the fraction of votes that
+were real — separately from the (now normally 100%) coverage number. Use
+`--fill-seed` to change or pin the coin flips across re-runs of the same
+export.
 
 Two things to report honestly:
 
-- **Best expert** is `correct / D` by default — the slides' definition, where an
-  absence counts against you. `experts.csv` also carries `rate_over_answered`.
-  With patchy attendance these diverge a lot and someone will ask.
+- **A student's rate over "all rounds" now includes their coin flips.** Heavy
+  absence pulls a student's rate towards 50%, which is by design (a filled
+  vote is uninformative), but it means a low-`manual_answered` student's
+  number is not really about their prediction skill.
 - **Run the robustness pass.** `--min-participation 0.8` restricts to students
-  who showed up for most questions, where full participation is roughly true.
-  If the headline survives, say so; if it doesn't, that is the finding.
+  who showed up for most questions — this filter is evaluated on real votes
+  *before* the coin-flip fill, so it still measures actual engagement. If the
+  headline survives, say so; if it doesn't, that is the finding.
 
 ## Choosing G
 
@@ -103,6 +105,7 @@ is provable" and "what happened" is a lecture point in itself.
 -G, --growth-rate      weight growth rate (default 1.0 = doubling)
 -o, --outdir           output directory (default ./out)
     --min-participation  keep experts answering >= this fraction (e.g. 0.8)
+    --fill-seed         seed for the 50/50 coin flip filled in for non-voters
     --tie-break        which side a tied majority falls to (default A)
     --sweep            also sweep G and plot actual vs guaranteed
     --top              experts to name in the weight chart (default 6)
