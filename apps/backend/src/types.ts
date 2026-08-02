@@ -72,3 +72,12 @@ export interface VoteRow {
   is_correct: 0 | 1 | null
   voted_at: string
 }
+
+export interface PushSubscriptionRow {
+  id: number
+  user_id: number
+  endpoint: string
+  p256dh: string
+  auth: string
+  created_at: string
+}

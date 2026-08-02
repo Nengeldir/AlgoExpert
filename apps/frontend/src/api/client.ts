@@ -120,6 +120,24 @@ export const api = {
       body: JSON.stringify({ email_notifications }),
     })
   },
+
+  getVapidPublicKey() {
+    return request<{ publicKey: string }>('/api/push/vapid-public-key')
+  },
+
+  subscribePush(subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) {
+    return request<{ ok: boolean }>('/api/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    })
+  },
+
+  unsubscribePush(endpoint: string) {
+    return request<void>('/api/push/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    })
+  },
 }
 
 async function adminRequest<T>(path: string, options: RequestInit = {}): Promise<T> {

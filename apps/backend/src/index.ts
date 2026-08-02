@@ -8,6 +8,7 @@ import { meRoutes } from './routes/me'
 import { questionRoutes } from './routes/questions'
 import { voteRoutes } from './routes/votes'
 import { historyRoutes } from './routes/history'
+import { pushRoutes } from './routes/push'
 import { adminRoutes } from './routes/admin'
 import { youtubeRoutes } from './routes/youtube'
 import { smiRoutes } from './routes/smi'
@@ -64,6 +65,7 @@ async function start() {
   await app.register(questionRoutes, { prefix: '/api/questions' })
   await app.register(voteRoutes, { prefix: '/api/votes' })
   await app.register(historyRoutes, { prefix: '/api/history' })
+  await app.register(pushRoutes, { prefix: '/api/push' })
   await app.register(adminRoutes, { prefix: '/admin' })
   await app.register(youtubeRoutes, { prefix: '/admin/youtube' })
   await app.register(smiRoutes, { prefix: '/admin/smi' })

@@ -1,5 +1,6 @@
 import type BetterSqlite3 from 'better-sqlite3'
 import { sendBatchEmails, type EmailMessage } from './email'
+import { sendPushToAll } from './push'
 
 /**
  * A question published longer ago than this is never emailed about — it is marked as
@@ -161,6 +162,18 @@ export async function dispatchNewQuestionEmails(
     }
 
     markNotified.run(nowIso, question.id)
+
+    // Best-effort second channel — never blocks or retries on failure, unlike email above.
+    await sendPushToAll(
+      db,
+      {
+        title: 'New question open for voting',
+        body: question.title,
+        url: `${appUrl}/today`,
+      },
+      log,
+    )
+
     log(`[notify] question ${question.id} announced to ${recipients.length} recipient(s)`)
     outcomes.push({
       question_id: question.id,

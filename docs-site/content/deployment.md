@@ -40,6 +40,8 @@ Set these in the Railway service's **Variables** tab:
 | `YOUTUBE_API_KEY` | From Google Cloud Console |
 | `RESEND_API_KEY` | From resend.com — required for password-reset and new-question emails |
 | `EMAIL_FROM` | e.g. `Expert Vote <noreply@yourdomain>` |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Generate with `npx web-push generate-vapid-keys` — required for browser push notifications |
+| `VAPID_SUBJECT` | A `mailto:` contact address, e.g. `mailto:admin@yourdomain` |
 
 `PORT` is injected by Railway; do not set it. `LOG_LEVEL` defaults to `info`.
 

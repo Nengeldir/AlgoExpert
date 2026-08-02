@@ -10,11 +10,9 @@ import '@fontsource/jetbrains-mono/700.css'
 import 'material-symbols/outlined.css'
 import './index.css'
 
-// Service worker is scaffolded but push logic is not yet implemented.
-// Uncomment when VAPID keys and push handler are added.
-// if ('serviceWorker' in navigator) {
-//   void navigator.serviceWorker.register('/sw.js')
-// }
+if ('serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/sw.js')
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

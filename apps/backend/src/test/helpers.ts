@@ -8,6 +8,7 @@ import { meRoutes } from '../routes/me'
 import { questionRoutes } from '../routes/questions'
 import { voteRoutes } from '../routes/votes'
 import { historyRoutes } from '../routes/history'
+import { pushRoutes } from '../routes/push'
 import { adminRoutes } from '../routes/admin'
 
 // Build a test app backed by an in-memory SQLite database
@@ -29,6 +30,7 @@ export function buildTestApp() {
   void app.register(questionRoutes, { prefix: '/api/questions' })
   void app.register(voteRoutes, { prefix: '/api/votes' })
   void app.register(historyRoutes, { prefix: '/api/history' })
+  void app.register(pushRoutes, { prefix: '/api/push' })
   void app.register(adminRoutes, { prefix: '/admin' })
 
   return app

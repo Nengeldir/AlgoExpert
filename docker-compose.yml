@@ -12,6 +12,9 @@ services:
       - PORT=3000
       - CORS_ORIGIN=http://localhost:5173
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:admin@example.com}
     volumes:
       - db-data:/data
       - ./apps/backend/src:/app/apps/backend/src:ro

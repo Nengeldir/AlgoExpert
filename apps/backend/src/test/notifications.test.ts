@@ -10,8 +10,11 @@ describe('New-question email notifications', () => {
 
   beforeAll(async () => {
     // No Resend key: sendBatchEmails logs instead of calling the API, so the whole flow
-    // runs without network access.
+    // runs without network access. Same for VAPID — no keys means sendPushToAll logs and
+    // returns instead of calling a push service.
     delete process.env.RESEND_API_KEY
+    delete process.env.VAPID_PUBLIC_KEY
+    delete process.env.VAPID_PRIVATE_KEY
     await app.ready()
   })
   afterAll(() => app.close())
@@ -75,8 +78,10 @@ describe('New-question email notifications', () => {
 
     const first = await dispatch()
     expect(first.statusCode).toBe(200)
-    const { notified } = first.json<{ notified: NotifyOutcome[] }>()
+    const { notified, log } = first.json<{ notified: NotifyOutcome[]; log: string[] }>()
     expect(notified).toEqual([{ question_id: id, title: 'Published question', recipients: 2 }])
+    // Push is attempted alongside email but skips cleanly without VAPID keys configured.
+    expect(log).toContain('[push] VAPID keys not set — skipping web push')
 
     // notified_at is the ledger — a second tick must not re-announce
     const second = await dispatch()

@@ -16,6 +16,8 @@ moves, so treat a surprise as a reason to check the source, not as a fact.
 | `YOUTUBE_API_KEY` | backend | *(none)* | YouTube endpoints return `503` without it |
 | `RESEND_API_KEY` | backend | *(none)* | Without it, reset links and new-question emails are logged instead of sent |
 | `EMAIL_FROM` | backend | — | Sender for all outgoing email |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | backend | *(none)* | Without both, `/api/push/vapid-public-key` returns `503` and push sends are skipped/logged. Generate with `npx web-push generate-vapid-keys` |
+| `VAPID_SUBJECT` | backend | `mailto:admin@example.com` | Contact address sent to push services with each notification |
 | `VITE_API_URL` | frontend | *(empty)* | **Build-time only.** Empty uses the dev proxy |
 
 > **Note:** `.env.example` also contains `FINANCIAL_MODELLING_PREP_API_KEY`. No code

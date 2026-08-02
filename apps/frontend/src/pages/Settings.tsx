@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { api, ApiError, clearToken, type UserProfile } from '../api/client'
 import { Icon } from '../App'
 import { applyTheme, getStoredTheme, type Theme } from '../theme'
+import {
+  getCurrentPushSubscription,
+  isPushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '../push'
 
 export default function Settings() {
   const navigate = useNavigate()
@@ -14,6 +20,11 @@ export default function Settings() {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  const [pushSupported] = useState(isPushSupported)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushError, setPushError] = useState<string | null>(null)
 
   const [resetSending, setResetSending] = useState(false)
   const [resetMessage, setResetMessage] = useState<string | null>(null)
@@ -36,7 +47,31 @@ export default function Settings() {
         setError(err instanceof ApiError ? err.message : 'Failed to load your settings.')
       })
       .finally(() => setLoading(false))
+
+    if (isPushSupported()) {
+      getCurrentPushSubscription()
+        .then((sub) => setPushEnabled(!!sub))
+        .catch(() => setPushEnabled(false))
+    }
   }, [])
+
+  async function handleTogglePush() {
+    setPushBusy(true)
+    setPushError(null)
+    try {
+      if (pushEnabled) {
+        await unsubscribeFromPush()
+        setPushEnabled(false)
+      } else {
+        await subscribeToPush()
+        setPushEnabled(true)
+      }
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Failed to update push notifications.')
+    } finally {
+      setPushBusy(false)
+    }
+  }
 
   if (loading) return <div className="loading">Loading settings…</div>
   if (error || !profile)
@@ -136,6 +171,26 @@ export default function Settings() {
             onClick={() => setEmailNotifications((v) => !v)}
           />
         </div>
+        <div className="settings-row">
+          <div>
+            <div className="settings-row__title">Push Notifications</div>
+            <div className="settings-row__hint">
+              {pushSupported
+                ? 'Instant alert on this device when a question opens'
+                : 'Not supported in this browser'}
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pushEnabled}
+            aria-label="Push notifications"
+            className="switch"
+            disabled={!pushSupported || pushBusy}
+            onClick={handleTogglePush}
+          />
+        </div>
+        {pushError && <div className="alert alert--error">{pushError}</div>}
         <button
           type="button"
           className="settings-link-row"
