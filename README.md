@@ -5,6 +5,36 @@ Students vote daily on binary prediction questions; the data is analyzed live in
 
 ---
 
+## 📖 Operator Handbook
+
+> ### **[→ Read the Operator Handbook](docs-site/content/index.md)**
+>
+> **If you are *running* this app rather than developing it, start there, not here.**
+> It is written for the TA on duty and assumes no TypeScript.
+>
+> | | |
+> |---|---|
+> | 🗓️ **[Daily operations](docs-site/content/daily-operations.md)** | What happens by itself each day, and the one thing that needs you |
+> | 🎛️ **[Admin console](docs-site/content/admin-console.md)** | Every control, and what it does |
+> | ⏱️ **[Cron setup](docs-site/content/cron-setup.md)** | The four scheduled jobs, step by step on cron-job.org |
+> | 🔑 **[External services](docs-site/content/external-services.md)** | YouTube API key, Resend email, push keys — and their free-tier limits |
+> | 🚀 **[Deployment](docs-site/content/deployment.md)** | Railway services, volumes, environment variables |
+> | 🧯 **[Troubleshooting](docs-site/content/troubleshooting.md)** | When no question appeared this morning |
+> | 🎓 **[Lecture day](docs-site/content/lecture-day.md)** | Turning a semester of votes into the live session |
+> | 🤝 **[Handover](docs-site/content/handover.md)** | **Leaving?** Transferring the Railway project, the domain, and the accounts |
+>
+> The pages above read fine on GitHub. To browse them as a searchable site with
+> navigation — which is how they are meant to be used — run:
+>
+> ```bash
+> cd docs-site && npm install && npm run build && npm run serve   # http://localhost:4180
+> ```
+>
+> It also deploys as its own static service; see
+> [Deployment → The docs site itself](docs-site/content/deployment.md#the-docs-site-itself).
+
+---
+
 ## Quick Start
 
 > **Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be running.
@@ -181,7 +211,9 @@ In production on Railway, there are no in-process timers — the container can s
 | YouTube — race tick | `POST /admin/youtube/resolve` | `*/5 * * * *` | Every 5 minutes |
 | Notify — new questions | `POST /admin/notifications/dispatch` | `*/5 * * * *` | Every 5 minutes |
 
-**SMI timezone:** Switzerland uses CET (UTC+1) in winter and CEST (UTC+2) in summer (late March – late October). During summer, change the SMI schedules to `0 6 * * 1-5` and `30 15 * * 1-5`. Alternatively, keep both variants active year-round — all endpoints are idempotent so a duplicate call does nothing.
+**SMI timezone:** the schedules above are UTC, but Switzerland uses CET (UTC+1) in winter and CEST (UTC+2) in summer (late March – late October). cron-job.org gives each job its own time zone, so set the two SMI jobs to `Europe/Zurich` and schedule them at 08:00 / 17:30 local — then they follow the change by themselves. On a scheduler without that setting, keep both UTC variants (`0 6` / `30 15` as well) active year-round; every endpoint is idempotent, so the call at the "wrong" hour does nothing.
+
+> Full walkthrough, free-tier limits, and the failure modes: **[Operator Handbook → Cron setup](docs-site/content/cron-setup.md)**.
 
 ### What each job does
 
@@ -313,10 +345,8 @@ Make sure `npm install` has been run and Node.js 20+ is active (`node --version`
 
 ## Further Reading
 
-- **[Operator handbook](docs-site/content/)** — running the app for a semester: daily
-  operations, the admin console, cron setup, deployment, troubleshooting, lecture day.
-  Build it as a browsable site with `cd docs-site && npm install && npm run build`, or
-  deploy it (see [Deployment](docs-site/content/deployment.md#the-docs-site-itself)).
+- **[Operator handbook](docs-site/content/index.md)** — running the app for a semester.
+  Linked page by page [at the top of this README](#-operator-handbook).
 - [Architecture decisions](docs/architecture.md) — why the app is built this way
 - [Expert Algorithm explanation](docs/algorithm.md) — the theory
 - [Analysis workflow](analysis/README.md) — turning the export into lecture material
