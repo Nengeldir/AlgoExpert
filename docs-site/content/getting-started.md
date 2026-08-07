@@ -57,11 +57,7 @@ can skip them locally:
 
 The SMI question source needs **no key** — it reads public endpoints.
 
-> **Note:** `.env.example` also lists `FINANCIAL_MODELLING_PREP_API_KEY`. Nothing in the
-> app reads it. It is a leftover from an abandoned data provider and can be ignored or
-> deleted. See [Reference → Environment variables](reference.html#environment-variables).
-
-## Create a question by hand
+## Create a question by hand without using the UI
 
 Useful for checking the whole loop end-to-end without waiting for a cron job.
 

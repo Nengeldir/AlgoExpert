@@ -7,6 +7,8 @@ night, and produce clean data for the lecture.
 It assumes you did not write the app and do not want to read TypeScript. Where something
 genuinely requires a code change, the page says so and points at the file.
 
+In the age of AI, feel free to use a chatbot or Claude Code to troubleshoot and ask for guidance.
+
 ## What the app does
 
 Students register with a **pseudonym** and vote on one binary question per day
@@ -55,8 +57,7 @@ Every question follows the same daily shape, in Zurich wall-clock time:
 
 The voting window and the measured window **must never overlap**. If they did, a student
 voting late would be observing the outcome rather than predicting it — they could simply
-read off the answer. That constraint explains most of the app's otherwise-odd timing
-decisions, and it is the thing most likely to be broken by a well-meaning change.
+read off the answer.
 
 [Question lifecycle](question-lifecycle.html) explains it properly. Read that page before
 you change any schedule.

@@ -33,10 +33,7 @@ first, because the API occasionally returns something unsuitable.
 3. Look at the two videos. If the pair is bad, click **Regenerate**.
 4. Click **Approve** to publish it.
 
-> **Tip:** Approving is decoupled from the schedule. You can approve at 07:00 or at
-> 11:55 and the question still runs on that day's fixed 08:00 / 12:00 / 24:00 anchors.
-> Approve after 12:00 and it targets **tomorrow's** slot instead. You never need to be
-> at your desk at a particular minute.
+> **Note:** Approving is decoupled from the schedule. You should approve a pair between 07:00 - 8:00, so that it becomes visible to the students at 8:00.
 
 One suggestion exists per day. Once approved it cannot be regenerated for that day.
 

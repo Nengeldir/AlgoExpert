@@ -44,18 +44,33 @@ async function ytFetch<T>(url: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
-  // chart=mostPopular is the reliable way to get active videos — no conflicting filters,
-  // 1 quota unit vs 100 for search, and trending videos are actively accumulating views
+// Unfiltered chart=mostPopular skews heavily toward gaming/music/reaction content, which
+// doesn't land with the 30+, non-gamer audience this app targets. Restricting to these
+// category IDs (Film & Animation, News & Politics, Education) keeps the pool relevant
+// without needing the 100-quota-unit search endpoint.
+const TARGET_CATEGORY_IDS = ['1', '25', '27']
+
+async function fetchCategoryVideos(apiKey: string, categoryId: string): Promise<VideoListItem[]> {
   const videosUrl =
     `${YOUTUBE_API_BASE}/videos?part=snippet,statistics` +
-    `&chart=mostPopular&maxResults=50&regionCode=US&key=${apiKey}`
+    `&chart=mostPopular&maxResults=25&regionCode=US&videoCategoryId=${categoryId}&key=${apiKey}`
 
-  const videosResp = await ytFetch<{ items?: VideoListItem[] }>(videosUrl)
-  const items = videosResp.items ?? []
+  const resp = await ytFetch<{ items?: VideoListItem[] }>(videosUrl)
+  return resp.items ?? []
+}
+
+export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
+  // chart=mostPopular (vs. search) is the reliable way to get active videos — 1 quota unit
+  // per category vs 100 for search, and trending videos are actively accumulating views
+  const perCategory = await Promise.all(
+    TARGET_CATEGORY_IDS.map((id) => fetchCategoryVideos(apiKey, id)),
+  )
+  const items = perCategory.flat()
 
   if (items.length < 2) {
-    throw new Error(`YouTube trending returned only ${items.length} videos.`)
+    throw new Error(
+      `YouTube trending returned only ${items.length} videos across the education/news/film categories.`,
+    )
   }
 
   // One video per channel

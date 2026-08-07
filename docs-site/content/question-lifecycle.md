@@ -21,7 +21,7 @@ These live in one file, `apps/backend/src/services/schedule.ts`, as `PUBLISH_HOU
 
 **Voting closes before the measured window opens.** Always.
 
-Here is what goes wrong otherwise. An earlier version ran the YouTube race for a full
+If you run the YouTube race for a full
 24 hours while voting stayed open the whole time. A student voting at hour 23 had
 already watched 96% of the thing being measured — they were not predicting, they were
 reading off the answer.
