@@ -68,8 +68,7 @@ A missing vote is not treated as wrong, but it is not left out of the round eith
 analysis flips a coin on the student's behalf (uniform 50/50) and records that as their
 vote for that round, tagged as a fill rather than a real vote.
 
-This matters for how you talk to the class: the fill is recorded separately from real
-votes at every level of the export, so "manual participation" — the share of votes that
+"Manual participation" — the share of votes that
 were actually cast — is a number worth reporting alongside the headline result, distinct
 from the (now normally 100%) coverage number. See [Lecture day](lecture-day.html).
 

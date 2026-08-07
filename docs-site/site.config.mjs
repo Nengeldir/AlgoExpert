@@ -33,8 +33,14 @@ export const nav = [
     section: 'Infrastructure',
     items: [
       { file: 'deployment.md', title: 'Deployment', slug: 'deployment' },
+      {
+        file: 'external-services.md',
+        title: 'External services',
+        slug: 'external-services',
+      },
       { file: 'troubleshooting.md', title: 'Troubleshooting', slug: 'troubleshooting' },
       { file: 'semester-reset.md', title: 'Semester reset', slug: 'semester-reset' },
+      { file: 'handover.md', title: 'Handover', slug: 'handover' },
     ],
   },
   {

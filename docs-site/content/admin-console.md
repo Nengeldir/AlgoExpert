@@ -1,8 +1,7 @@
 # Admin console
 
 The web UI at `/admin`. Everything here is also available over HTTP — see
-[Reference → Admin endpoints](reference.html#admin-endpoints) — but the console is
-faster for day-to-day work.
+[Reference → Admin endpoints](reference.html#admin-endpoints).
 
 ## Signing in
 
@@ -11,8 +10,8 @@ Go to **`/admin/login`** and paste the admin token. There is no username.
 The token is stored in your browser and sent as `Authorization: Bearer <token>` on every
 admin request. Logging out clears it. `/admin` redirects to `/admin/questions`.
 
-There is no link to the admin console anywhere in the participant UI — you have to type
-`/admin/login` in the address bar. Once the token is accepted, an **Admin** entry appears
+There is no link to the admin console anywhere in the participant UI — **you have to type
+`/admin/login` in the address bar**. Once the token is accepted, an **Admin** entry appears
 in the navigation (sidebar on desktop, bottom bar on mobile) and stays there until you use
 **Admin Logout**. Participants therefore never see an admin tab they cannot use.
 

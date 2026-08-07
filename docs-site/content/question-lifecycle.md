@@ -54,7 +54,7 @@ than once a day.
 
 **Both boundary snapshots record when they were actually taken** — `race_start_at` and
 `race_end_at`, alongside the view counts. So the true window length is auditable rather
-than assumed. Cron slop lengthens the window but cannot favour one option, because both
+than assumed. Cron job problems lengthens the window but cannot favour one option, because both
 videos are read in a single API call.
 
 **Questions approved ahead of their slot stay hidden.** `GET /api/questions` filters on
@@ -74,9 +74,7 @@ SMI voting closes at **12:00**, not at the 17:30 market close. That keeps the
 unobservable to voters.
 
 > **Warning:** There is a known, deliberate residual leak. Voters can still see
-> 09:00–12:00 trading, roughly 35% of the measured day. Closing it fully would require
-> an intraday quote to re-anchor the question to the 12:00 index level, and the current
-> daily-close provider chain cannot supply one.
+> 09:00–12:00 trading, roughly 35% of the measured day. 
 
 This is worth stating out loud in the lecture rather than hiding: it is a real,
 quantified limitation of the experiment, and "how much did the leak matter?" is itself

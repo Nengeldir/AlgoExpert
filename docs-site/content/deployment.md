@@ -45,6 +45,9 @@ Set these in the Railway service's **Variables** tab:
 
 `PORT` is injected by Railway; do not set it. `LOG_LEVEL` defaults to `info`.
 
+Where each of those keys comes from — and what the free tiers allow — is
+[External services](external-services.html).
+
 > **Warning:** `CORS_ORIGIN` does double duty — it is also the base URL used to build the
 > links in outgoing email, both password resets and new-question announcements. If it is
 > wrong, those emails point students at the wrong host and the links are dead.
@@ -131,4 +134,4 @@ See [Semester reset → Backing up first](semester-reset.html#backing-up-first).
 
 ## Next
 
-→ [Troubleshooting](troubleshooting.html): when something is not working.
+→ [External services](external-services.html): the accounts behind the API keys above.

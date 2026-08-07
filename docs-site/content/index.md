@@ -43,6 +43,7 @@ either automated or a once-a-semester setup step.
 - Taking over an app that is already live? → [Daily operations](daily-operations.html)
 - Something is broken right now? → [Troubleshooting](troubleshooting.html)
 - New semester, fresh cohort? → [Semester reset](semester-reset.html)
+- Leaving, or taking over from someone who left? → [Handover](handover.html)
 - Lecture is tomorrow? → [Lecture day](lecture-day.html)
 
 ## The one concept worth understanding

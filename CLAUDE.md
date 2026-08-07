@@ -73,7 +73,7 @@ All four jobs use:
 | YouTube — race tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Drives **both** ends of the race (see below) |
 | Notify — new questions | `/admin/notifications/dispatch` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Emails participants once a question is actually visible |
 
-**SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer. The simplest workaround is to run both UTC offset schedules year-round — all endpoints are idempotent so duplicate calls are harmless.
+**SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer; the schedules above are UTC. cron-job.org carries a per-job time zone (defaulting to UTC), so the fix is to set the SMI jobs to `Europe/Zurich` and schedule them at 08:00 / 17:30 local. On a scheduler without time zone support, run both UTC offset schedules year-round instead — all endpoints are idempotent so duplicate calls are harmless.
 
 **YouTube creation** remains manual: visit `/admin/youtube/suggest` to fetch a pair, then `/admin/youtube/approve` to publish it as a question. Approving is decoupled from the schedule — you can approve any time before 12:00 CET and the question still runs on that day's anchors.
 

@@ -110,7 +110,9 @@ they will start returning `403`. This is the step most likely to be forgotten.
 6. `YOUTUBE_API_KEY` still valid and within quota.
 7. `RESEND_API_KEY` still valid, and a test password reset actually arrives.
 8. Register a test account end-to-end: vote, resolve, check History.
-9. Hand over this handbook and the admin token to whoever is taking over.
+9. Hand over this handbook and the admin token to whoever is taking over. If the *person*
+   is changing and not just the cohort, the accounts move too — see
+   [Handover](handover.html).
 
 ## Generating a good secret
 
@@ -124,4 +126,4 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ## Next
 
-→ [Lecture day](lecture-day.html): turning a semester of votes into the live session.
+→ [Handover](handover.html): when the *person* changes, not just the cohort.

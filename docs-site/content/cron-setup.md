@@ -30,8 +30,8 @@ default.
 |---|---|---|---|
 | SMI — create | `/admin/smi/daily` | `0 7 * * 1-5` | 08:00 CET, weekdays |
 | SMI — resolve | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET, weekdays |
-| YouTube — tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 minutes, all week |
-| Notify — new questions | `/admin/notifications/dispatch` | `*/5 * * * *` | Every 5 minutes, all week |
+| YouTube — tick | `/admin/youtube/resolve` | `*/15 * * * *` | Every 15 minutes, all week |
+| Notify — new questions | `/admin/notifications/dispatch` | `*/15 * * * *` | Every 15 minutes, all week |
 
 Prefix each path with your backend's public URL, e.g.
 `https://your-backend.up.railway.app/admin/smi/daily`.
@@ -46,6 +46,56 @@ Prefix each path with your backend's public URL, e.g.
 
 YouTube question *creation* stays manual on purpose; see
 [Admin console → The YouTube panel](admin-console.html#the-youtube-panel).
+
+## Creating the jobs, step by step
+
+cron-job.org accounts are free and personal — the jobs hold nothing but a URL and a token,
+so a successor can recreate them in ten minutes on their own account. See
+[Handover](handover.html#3-what-the-successor-recreates).
+
+1. **Sign up** at [cron-job.org](https://cron-job.org) and confirm the address. Use one you
+   will still read next semester; it is where failure alerts go.
+2. **Console → CREATE CRONJOB.**
+3. **Title** — name it for what it does, not for the URL: `SMI create`, `SMI resolve`,
+   `YouTube tick`, `Notify`. In six months you will be reading this list while something is
+   broken.
+4. **URL** — the backend's public URL plus the path, e.g.
+   `https://your-backend.up.railway.app/admin/smi/daily`. It must be `https`.
+5. **Execution schedule** — pick the times from the table above. The editor is a grid of
+   minutes/hours/days rather than a cron string; for the two five-minute jobs there is a
+   ready-made *Every 5 minutes* option. **Set the time zone to `Europe/Zurich`** — see
+   below.
+6. **Advanced** — this section is collapsed by default and contains the two settings that
+   actually matter:
+   - **Request method:** `POST`. The default is `GET`, and every one of these endpoints
+     will reject a `GET`.
+   - **Headers:** add `Authorization` with value `Bearer <your ADMIN_TOKEN>`. One header,
+     name and value in separate fields — do not paste the whole line into the name box.
+7. **Notifications** — switch on *notify on failure* and *notify on disable*. Without them
+   a broken job is invisible until a student asks why there was no question.
+8. **Save**, and make sure the job is **enabled**.
+
+Repeat for all four. Then verify — see [below](#verifying-the-jobs-work).
+
+### Limits worth knowing
+
+The free tier is generous but has three edges that produce confusing symptoms:
+
+| Limit | Free tier | What it looks like when you hit it |
+|---|---|---|
+| Request timeout | 30 s | Job marked failed even though the endpoint did its work |
+| Response size | 64 KB | Execution aborted — "output too large" |
+| Consecutive failures | 25 | **The job is disabled automatically** |
+
+The timeout is the realistic one. A Railway container that has scaled to zero needs a few
+seconds to wake, and the SMI job then calls an external quote provider. If a job
+intermittently reports a timeout but the question appears anyway, that is what happened —
+the work committed, the response just arrived late.
+
+> **Danger:** The auto-disable after 25 failures is the trap. Rotate `ADMIN_TOKEN` without
+> updating the header and every job returns `403`; the five-minute jobs burn through 25
+> failures in about two hours and switch themselves off. Re-enabling is a manual click, and
+> the only symptom is that nothing happens the next morning.
 
 ## The daylight saving trap
 
@@ -63,9 +113,19 @@ The SMI jobs are the ones affected:
 
 The YouTube and notification ticks run every five minutes, so they are timezone-agnostic.
 
-**The simplest fix is to run both variants year-round.** Create four SMI jobs instead of
-two — the winter pair and the summer pair — and leave them all enabled. Every endpoint is
-idempotent, so the call that fires at the "wrong" hour does nothing:
+**On cron-job.org, set the job's time zone to `Europe/Zurich` and the problem disappears.**
+Each job carries its own time zone (it defaults to UTC), and the service applies the
+offset for you. Schedule the SMI jobs at **08:00** and **17:30** Zurich local and leave
+them alone — they follow the country twice a year without you touching anything.
+
+08:00 and 17:30 are both far from the 02:00–03:00 window where DST transitions cause a
+local time to be skipped or repeated, so there is no edge case to reason about here.
+
+### If your scheduler has no time zone setting
+
+Run **both** UTC variants year-round: four SMI jobs instead of two, the winter pair and the
+summer pair, all enabled. Every endpoint is idempotent, so the call that fires at the
+"wrong" hour does nothing:
 
 - `/admin/smi/daily` refuses to create a second question for the same day, and refuses
   entirely once voting has closed.
