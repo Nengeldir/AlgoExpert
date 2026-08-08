@@ -12,6 +12,9 @@ interface VideoListItem {
   statistics: {
     viewCount?: string
   }
+  contentDetails: {
+    duration: string
+  }
 }
 
 interface ChannelItem {
@@ -46,18 +49,43 @@ async function ytFetch<T>(url: string): Promise<T> {
 
 // Unfiltered chart=mostPopular skews heavily toward gaming/music/reaction content, which
 // doesn't land with the 30+, non-gamer audience this app targets. Restricting to these
-// category IDs (Film & Animation, News & Politics, Science & Technology) keeps the pool
+// category IDs (People & Blogs, News & Politics, Science & Technology) keeps the pool
 // relevant without needing the 100-quota-unit search endpoint.
 //
+// These three are also the only charts that still carry meaningful long-form content once
+// Shorts are filtered out (see SHORTS_MAX_SECONDS). Measured Aug 2026, long-form share of
+// the top 50: People & Blogs 43, News & Politics 30, Science & Tech 10 — while Film &
+// Animation, Comedy, Entertainment, Howto & Style and Pets were all *zero*, which is why
+// Film & Animation (1) is no longer drawn from.
+//
 // YouTube retires per-category trending charts without notice — Education (27) and Travel
-// (19) both 404 as of Aug 2026, which is why 27 was replaced by 28 here and why a 404 on
-// any single category is tolerated below rather than failing the whole suggestion.
-const TARGET_CATEGORY_IDS = ['1', '25', '28']
+// (19) both 404 as of Aug 2026 — so a 404 on any single category is tolerated below rather
+// than failing the whole suggestion.
+const TARGET_CATEGORY_IDS = ['22', '25', '28']
+
+// Shorts can run up to 3 minutes since Oct 2024, so anything at or under that is treated as
+// one. They make terrible race questions: view counts are driven by opaque feed-push rather
+// than by anything a voter can reason about, and they can add millions of views overnight.
+// A handful of genuinely short long-form videos get caught too — an acceptable trade for a
+// pool that is entirely Shorts otherwise.
+const SHORTS_MAX_SECONDS = 180
+
+// contentDetails.duration is ISO-8601 ("PT4M13S"). Live broadcasts report "P0D", which this
+// maps to 0 — so the Shorts filter drops them as well, which is what we want: a stream's
+// view count is a concurrent-viewer artifact, not a comparable total.
+export function parseIsoDurationSeconds(iso: string): number {
+  const m = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso)
+  if (!m) return 0
+  const [, days, hours, minutes, seconds] = m
+  return +(days ?? 0) * 86400 + +(hours ?? 0) * 3600 + +(minutes ?? 0) * 60 + +(seconds ?? 0)
+}
 
 async function fetchCategoryVideos(apiKey: string, categoryId: string): Promise<VideoListItem[]> {
+  // maxResults=50 is the API maximum and costs the same single quota unit as 25 — worth
+  // taking, since the Shorts filter discards most of what comes back.
   const videosUrl =
-    `${YOUTUBE_API_BASE}/videos?part=snippet,statistics` +
-    `&chart=mostPopular&maxResults=25&regionCode=US&videoCategoryId=${categoryId}&key=${apiKey}`
+    `${YOUTUBE_API_BASE}/videos?part=snippet,statistics,contentDetails` +
+    `&chart=mostPopular&maxResults=50&regionCode=US&videoCategoryId=${categoryId}&key=${apiKey}`
 
   const res = await fetch(videosUrl)
   // A category with no trending chart answers 404 "Requested entity was not found". That is
@@ -77,11 +105,18 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
   const perCategory = await Promise.all(
     TARGET_CATEGORY_IDS.map((id) => fetchCategoryVideos(apiKey, id)),
   )
-  const items = perCategory.flat()
+  const trending = perCategory.flat()
+
+  // Drop Shorts before deduplicating by channel, so a channel that trends with both a Short
+  // and a real video is represented by the real video rather than being consumed by the Short.
+  const items = trending.filter(
+    (item) => parseIsoDurationSeconds(item.contentDetails.duration) > SHORTS_MAX_SECONDS,
+  )
 
   if (items.length < 2) {
     throw new Error(
-      `YouTube trending returned only ${items.length} videos across categories ${TARGET_CATEGORY_IDS.join(', ')}.`,
+      `YouTube trending returned only ${items.length} non-Shorts videos (of ${trending.length}) ` +
+        `across categories ${TARGET_CATEGORY_IDS.join(', ')}.`,
     )
   }
 

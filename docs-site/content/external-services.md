@@ -63,12 +63,32 @@ orders of magnitude of headroom. Two design choices buy that margin:
 
 - `services/youtube.ts` draws candidates from `chart=mostPopular` rather than
   `search.list`. Search costs **100 units** per call and is capped at 100 calls/day for
-  new projects; the trending chart costs 1.
+  new projects; the trending chart costs 1 — and costs the same 1 whether it returns 25
+  results or the maximum 50, which is why it asks for 50.
 - The five-minute race tick queries SQLite *first* and only touches the YouTube API when a
   race actually needs opening or closing. The 288 daily ticks are almost all free.
 
 So if you ever see `403 quotaExceeded`, something is wrong — a runaway loop, or the key
 being shared with another project — rather than normal use.
+
+### Which videos can be drawn
+
+Two filters sit between the trending chart and a suggestion, both in
+`TARGET_CATEGORY_IDS` / `SHORTS_MAX_SECONDS` (`services/youtube.ts`):
+
+- **Only three categories** — People & Blogs, News & Politics, Science & Technology.
+- **No Shorts.** Anything three minutes or under is dropped, Shorts having been allowed to
+  run that long since Oct 2024. Live broadcasts report a duration of `P0D` and are dropped
+  by the same rule, deliberately: a stream's view count is a concurrent-viewer artifact, not
+  a total that can be raced.
+
+Shorts are excluded because their view counts are driven by opaque feed-push rather than by
+anything a voter can reason about, and they can take on millions of views overnight — a race
+between two of them is closer to a coin flip than to a prediction. The category list follows
+from that: measured over the top 50 in Aug 2026, Film & Animation, Comedy, Entertainment,
+Howto & Style and Pets were **100% Shorts**, so drawing from them spends a quota unit to
+return nothing. If a future measurement shows the three remaining categories drying up, swap
+in whichever ones still carry long-form rather than relaxing the duration filter.
 
 ### `404 Requested entity was not found`
 
