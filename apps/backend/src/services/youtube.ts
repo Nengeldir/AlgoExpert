@@ -46,16 +46,28 @@ async function ytFetch<T>(url: string): Promise<T> {
 
 // Unfiltered chart=mostPopular skews heavily toward gaming/music/reaction content, which
 // doesn't land with the 30+, non-gamer audience this app targets. Restricting to these
-// category IDs (Film & Animation, News & Politics, Education) keeps the pool relevant
-// without needing the 100-quota-unit search endpoint.
-const TARGET_CATEGORY_IDS = ['1', '25', '27']
+// category IDs (Film & Animation, News & Politics, Science & Technology) keeps the pool
+// relevant without needing the 100-quota-unit search endpoint.
+//
+// YouTube retires per-category trending charts without notice — Education (27) and Travel
+// (19) both 404 as of Aug 2026, which is why 27 was replaced by 28 here and why a 404 on
+// any single category is tolerated below rather than failing the whole suggestion.
+const TARGET_CATEGORY_IDS = ['1', '25', '28']
 
 async function fetchCategoryVideos(apiKey: string, categoryId: string): Promise<VideoListItem[]> {
   const videosUrl =
     `${YOUTUBE_API_BASE}/videos?part=snippet,statistics` +
     `&chart=mostPopular&maxResults=25&regionCode=US&videoCategoryId=${categoryId}&key=${apiKey}`
 
-  const resp = await ytFetch<{ items?: VideoListItem[] }>(videosUrl)
+  const res = await fetch(videosUrl)
+  // A category with no trending chart answers 404 "Requested entity was not found". That is
+  // a fact about the category, not a broken request, so drop it and use whatever remains.
+  if (res.status === 404) return []
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`YouTube API ${res.status}: ${body.slice(0, 300)}`)
+  }
+  const resp = (await res.json()) as { items?: VideoListItem[] }
   return resp.items ?? []
 }
 
@@ -69,7 +81,7 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
 
   if (items.length < 2) {
     throw new Error(
-      `YouTube trending returned only ${items.length} videos across the education/news/film categories.`,
+      `YouTube trending returned only ${items.length} videos across categories ${TARGET_CATEGORY_IDS.join(', ')}.`,
     )
   }
 
@@ -81,15 +93,30 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
     return true
   })
 
-  // Fetch subscriber counts for the unique channels
-  const channelIds = unique.map((i) => i.snippet.channelId).join(',')
-  const channelsUrl = `${YOUTUBE_API_BASE}/channels?part=statistics&id=${channelIds}&key=${apiKey}`
+  // Fetch subscriber counts for the unique channels. channels.list accepts at most 50 ids
+  // per call and answers 400 invalidFilters beyond that, so batch — three categories of 25
+  // videos can easily clear that limit.
+  const CHANNEL_ID_BATCH = 50
+  const channelIds = unique.map((i) => i.snippet.channelId)
+  const batches: string[][] = []
+  for (let i = 0; i < channelIds.length; i += CHANNEL_ID_BATCH) {
+    batches.push(channelIds.slice(i, i + CHANNEL_ID_BATCH))
+  }
 
-  const channelsResp = await ytFetch<{ items?: ChannelItem[] }>(channelsUrl)
+  const channelResponses = await Promise.all(
+    batches.map((batch) =>
+      ytFetch<{ items?: ChannelItem[] }>(
+        `${YOUTUBE_API_BASE}/channels?part=statistics&id=${batch.join(',')}&key=${apiKey}`,
+      ),
+    ),
+  )
+
   const channelStats = new Map<string, number>()
-  for (const ch of channelsResp.items ?? []) {
-    if (ch.statistics.subscriberCount) {
-      channelStats.set(ch.id, parseInt(ch.statistics.subscriberCount, 10))
+  for (const resp of channelResponses) {
+    for (const ch of resp.items ?? []) {
+      if (ch.statistics.subscriberCount) {
+        channelStats.set(ch.id, parseInt(ch.statistics.subscriberCount, 10))
+      }
     }
   }
 

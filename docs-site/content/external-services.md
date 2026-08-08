@@ -54,7 +54,7 @@ this app actually spends:
 
 | Action | Calls | Units |
 |---|---|---|
-| Drawing a pair (`/admin/youtube/suggest`) | 3 × `videos.list` + 1 × `channels.list` | **4** |
+| Drawing a pair (`/admin/youtube/suggest`) | 3 × `videos.list` + 2 × `channels.list` | **5** |
 | Opening a race (12:00) | 1 × `videos.list` | **1** |
 | Closing a race (24:00) | 1 × `videos.list` | **1** |
 
@@ -69,6 +69,20 @@ orders of magnitude of headroom. Two design choices buy that margin:
 
 So if you ever see `403 quotaExceeded`, something is wrong — a runaway loop, or the key
 being shared with another project — rather than normal use.
+
+### `404 Requested entity was not found`
+
+YouTube retires the trending chart for individual categories without notice — Education
+(27) and Travel (19) both stopped answering in August 2026. Drawing a pair now skips any
+category that 404s and builds the pair from whichever categories still respond, so a
+single retirement no longer breaks `/admin/youtube/suggest`. If you see the suggestion
+complain that too few videos came back, all three categories in `TARGET_CATEGORY_IDS`
+(`services/youtube.ts`) have gone dark and need replacing — probe a candidate with:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&maxResults=1&regionCode=US&videoCategoryId=26&key=$YOUTUBE_API_KEY"
+```
 
 ## Resend
 
