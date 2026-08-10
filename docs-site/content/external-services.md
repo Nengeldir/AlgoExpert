@@ -54,17 +54,17 @@ this app actually spends:
 
 | Action | Calls | Units |
 |---|---|---|
-| Drawing a pair (`/admin/youtube/suggest`) | 3 × `videos.list` + 2 × `channels.list` | **5** |
+| Drawing a pair (`/admin/youtube/suggest`) | 1 × `channels.list` + 33 × `playlistItems.list` + ~3 × `videos.list` | **~38** |
 | Opening a race (12:00) | 1 × `videos.list` | **1** |
 | Closing a race (24:00) | 1 × `videos.list` | **1** |
 
-That is under twenty units on a busy day against an allowance of ten thousand — three
+That is around forty units on a busy day against an allowance of ten thousand — still two
 orders of magnitude of headroom. Two design choices buy that margin:
 
-- `services/youtube.ts` draws candidates from `chart=mostPopular` rather than
-  `search.list`. Search costs **100 units** per call and is capped at 100 calls/day for
-  new projects; the trending chart costs 1 — and costs the same 1 whether it returns 25
-  results or the maximum 50, which is why it asks for 50.
+- `services/youtube.ts` reads each curated channel's **uploads playlist**, which costs 1 unit
+  per channel, rather than calling `search.list` at **100 units** per call (and capped at 100
+  calls/day for new projects). Reading a 33-channel roster outright is a third of the price of
+  a single search query.
 - The five-minute race tick queries SQLite *first* and only touches the YouTube API when a
   race actually needs opening or closing. The 288 daily ticks are almost all free.
 
@@ -73,36 +73,61 @@ being shared with another project — rather than normal use.
 
 ### Which videos can be drawn
 
-Two filters sit between the trending chart and a suggestion, both in
-`TARGET_CATEGORY_IDS` / `SHORTS_MAX_SECONDS` (`services/youtube.ts`):
+Candidates come from a **hand-picked roster of channels** — `CURATED_CHANNELS` in
+`services/youtube.ts` — not from YouTube's trending charts. Roughly 33 channels: Swiss and
+German public-broadcaster documentary strands (SRF Dok, ARTE, ZDFinfo, NDR/WDR/SWR Doku,
+phoenix, 3sat NANO, Terra X), German-language explainer and science channels (Quarks,
+Simplicissimus, MrWissen2go, MAITHINK X, Dinge Erklärt), investigative reportage (STRG_F,
+Y-Kollektiv, SPIEGEL TV) and a few English-language explainers (Vox, Veritasium, Johnny Harris).
 
-- **Only three categories** — People & Blogs, News & Politics, Science & Technology.
+Four filters sit between the roster and a suggestion:
+
+- **Recency** — only uploads from the last 7 days (`RECENT_DAYS`), widening to 21 once if the
+  roster has been too quiet to fill a pair. A documentary posted a month ago has settled onto a
+  flat view curve, so racing two of them measures noise.
 - **No Shorts.** Anything three minutes or under is dropped, Shorts having been allowed to
-  run that long since Oct 2024. Live broadcasts report a duration of `P0D` and are dropped
-  by the same rule, deliberately: a stream's view count is a concurrent-viewer artifact, not
-  a total that can be raced.
+  run that long since Oct 2024. Live broadcasts and premieres are dropped too: a stream's view
+  count is a concurrent-viewer artifact, not a total that can be raced.
+- **Minimum pace** — at least ~170 views/hour (`MIN_VIEWS_PER_HOUR`), so the video gains
+  roughly 2,000 views across the 12 h window and the winner is not decided by jitter.
+- **One video per channel** — the newest qualifying upload, which has the steepest view curve.
 
 Shorts are excluded because their view counts are driven by opaque feed-push rather than by
 anything a voter can reason about, and they can take on millions of views overnight — a race
-between two of them is closer to a coin flip than to a prediction. The category list follows
-from that: measured over the top 50 in Aug 2026, Film & Animation, Comedy, Entertainment,
-Howto & Style and Pets were **100% Shorts**, so drawing from them spends a quota unit to
-return nothing. If a future measurement shows the three remaining categories drying up, swap
-in whichever ones still carry long-form rather than relaxing the duration filter.
+between two of them is closer to a coin flip than to a prediction.
+
+#### Why a roster instead of trending
+
+Trending was dropped for two independent reasons. **Audience:** `chart=mostPopular` returns
+what is popular with YouTube's median viewer — gaming, reaction content, influencer vlogs —
+and this app's participants are largely 30+ and not habitual YouTube users, so those pairs
+asked them to predict a race between two things they had no basis to reason about.
+**Availability:** YouTube keeps retiring per-category trending charts, and Education (27) —
+exactly the category this audience wanted — is among the dead ones.
+
+The trade-off is editorial: the roster, not an algorithm, decides what participants see. Keep
+it broad across topic and language so the pool does not inherit a narrow bias.
+
+#### Editing the roster
+
+Entries are channel IDs rather than handles, because handles get renamed. To resolve a new one:
+
+```bash
+curl -s "https://www.googleapis.com/youtube/v3/channels?part=snippet&forHandle=ARTEde&key=$YOUTUBE_API_KEY" \
+  | grep -o '"id": "[^"]*"' | head -1
+```
+
+If `forHandle` returns nothing, the handle is wrong — fall back to
+`search?part=snippet&type=channel&q=<name>` (100 units) and read the `channelId` off the result.
+A channel that stops uploading needs no cleanup; it simply stops contributing candidates at a
+cost of one wasted quota unit per draw.
 
 ### `404 Requested entity was not found`
 
-YouTube retires the trending chart for individual categories without notice — Education
-(27) and Travel (19) both stopped answering in August 2026. Drawing a pair now skips any
-category that 404s and builds the pair from whichever categories still respond, so a
-single retirement no longer breaks `/admin/youtube/suggest`. If you see the suggestion
-complain that too few videos came back, all three categories in `TARGET_CATEGORY_IDS`
-(`services/youtube.ts`) have gone dark and need replacing — probe a candidate with:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' \
-  "https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&maxResults=1&regionCode=US&videoCategoryId=26&key=$YOUTUBE_API_KEY"
-```
+A single channel's uploads playlist failing is tolerated — the draw logs it and continues on
+the rest of the roster. If `/admin/youtube/suggest` reports that too few videos qualified,
+the roster is genuinely quiet (a holiday week) or the filters have become too strict; check
+`RECENT_DAYS` and `MIN_VIEWS_PER_HOUR` before adding channels.
 
 ## Resend
 
