@@ -262,6 +262,33 @@ describe('fetchYoutubePair', () => {
     expect(calls.playlists).toBe(CURATED_CHANNELS.length)
   })
 
+  it('pairs across wildly different channel sizes when the race itself is close', async () => {
+    // A 90k-subscriber channel and a 12M-subscriber one, both moving at ~4,000 views/h. The
+    // old subscriber-ratio gate rejected this outright; the race is genuinely close.
+    mockYoutube({
+      small: { channel: chA, views: 40_000, publishedAt: hoursAgo(10), subscribers: 90_000 },
+      huge: { channel: chB, views: 42_000, publishedAt: hoursAgo(10), subscribers: 12_000_000 },
+    })
+
+    const pair = await fetchYoutubePair('test-key')
+
+    expect([pair.videoA.videoId, pair.videoB.videoId].sort()).toEqual(['huge', 'small'])
+  })
+
+  it('prefers the closer race when view counts alone would mislead', async () => {
+    // slowBurner matches fastRiser on total views but took 5× longer to get there, so its
+    // 12 h gain will be far smaller. steady is the honest opponent.
+    mockYoutube({
+      fastRiser: { channel: chA, views: 60_000, publishedAt: hoursAgo(10) },
+      steady: { channel: chB, views: 54_000, publishedAt: hoursAgo(10) },
+      slowBurner: { channel: chC, views: 60_000, publishedAt: hoursAgo(50) },
+    })
+
+    const pair = await fetchYoutubePair('test-key')
+
+    expect([pair.videoA.videoId, pair.videoB.videoId].sort()).toEqual(['fastRiser', 'steady'])
+  })
+
   it('rejects when nothing on the roster qualifies', async () => {
     mockYoutube({
       s1: { channel: chA, views: 90_000, duration: SHORT },

@@ -74,11 +74,12 @@ being shared with another project — rather than normal use.
 ### Which videos can be drawn
 
 Candidates come from a **hand-picked roster of channels** — `CURATED_CHANNELS` in
-`services/youtube.ts` — not from YouTube's trending charts. Roughly 33 channels: Swiss and
+`services/youtube.ts` — not from YouTube's trending charts. Roughly 35 channels: Swiss and
 German public-broadcaster documentary strands (SRF Dok, ARTE, ZDFinfo, NDR/WDR/SWR Doku,
 phoenix, 3sat NANO, Terra X), German-language explainer and science channels (Quarks,
 Simplicissimus, MrWissen2go, MAITHINK X, Dinge Erklärt), investigative reportage (STRG_F,
-Y-Kollektiv, SPIEGEL TV) and a few English-language explainers (Vox, Veritasium, Johnny Harris).
+Y-Kollektiv, SPIEGEL TV) and English-language current affairs (Vox, The Economist, Channel 4
+News, ABC News In-depth, CNA Insider, TLDR News, VisualPolitik).
 
 Four filters sit between the roster and a suggestion:
 
@@ -107,6 +108,33 @@ exactly the category this audience wanted — is among the dead ones.
 
 The trade-off is editorial: the roster, not an algorithm, decides what participants see. Keep
 it broad across topic and language so the pool does not inherit a narrow bias.
+
+#### How a pair is chosen
+
+Two videos pair if their **view counts** are within 3× *and* their **views-per-hour** are within
+3×. The first is about optics — the question text quotes both view counts, and "12k vs 900k"
+looks decided before the race starts. The second is about the actual race: the 12 h window
+measures the *change* in views, and views-per-hour estimates that directly.
+
+There is deliberately **no subscriber-count gate**. It was only ever a crude proxy for expected
+growth, and it priced out every cross-language pair — the English channels run an order of
+magnitude larger by subscriber count than the Swiss and German ones, so any reasonable bound
+rejected them however close the real race was. Two videos moving at a similar rate make a close
+race whether their channels have 90k subscribers or 12M.
+
+#### Adding channels: match cadence and scale, not just topic
+
+The two failure modes are subtle, and both make a channel silently contribute nothing:
+
+- **Too slow a cadence.** Only uploads inside the 7-day window count. Veritasium, Kurzgesagt,
+  Johnny Harris and RealLifeLore post every 10–26 days, so they are usually absent entirely.
+- **Wrong view scale.** Their videos land at 1–5M views against 10–250k for the German
+  documentary strands, so no pair clears the 3× view-ratio gate even when they are present.
+
+All four were on the original roster and effectively never appeared. The replacements were
+picked by measuring both properties first: at least two long-form uploads per week, and a median
+view count in the same 13k–190k band as the rest of the roster. Check a candidate before adding
+it rather than trusting that a good channel will produce good questions.
 
 #### Editing the roster
 

@@ -37,6 +37,8 @@ export interface VideoCandidate {
   subscribers: number
   viewCount: number
   publishedAt: string
+  /** Average views per hour since publication — the pairing signal, not persisted. */
+  viewsPerHour: number
 }
 
 export interface YoutubePair {
@@ -104,13 +106,22 @@ export const CURATED_CHANNELS: { id: string; name: string }[] = [
   { id: 'UCfa7jJFYnn3P5LdJXsFkrjw', name: 'STRG_F' },
   { id: 'UCLoWcRy-ZjA-Erh0p_VDLjQ', name: 'Y-Kollektiv' },
   { id: 'UC1w6pNGiiLdZgyNpXUnA4Zw', name: 'DER SPIEGEL' },
-  // English-language explainer
+  // English-language current affairs and documentary.
+  //
+  // Chosen for *cadence and scale*, not just topic. The obvious picks — Veritasium, Kurzgesagt,
+  // Johnny Harris, RealLifeLore — are dead weight here on both counts: they upload every 10–26
+  // days, so they are usually absent from a 7-day window entirely, and when they do land their
+  // videos sit at 1–5M views against 10–250k for the German documentary strands, so no pair
+  // clears the view-ratio gate. Measured Aug 2026, these seven upload at least twice a week and
+  // sit in the same 13k–190k band as the German channels, which is what lets them actually pair.
   { id: 'UCLXo7UDZvByw2ixzpQCufnA', name: 'Vox' },
-  { id: 'UCHnyfMqiRRG1u-2MsSQLbXA', name: 'Veritasium' },
-  { id: 'UCP5tjEmvPItGyLhmjdwP7Ww', name: 'RealLifeLore' },
-  { id: 'UCmGSJVG3mCRXVOP4yZrU1Dw', name: 'Johnny Harris' },
-  { id: 'UCgNg3vwj3xt7QOrcIDaHdFg', name: 'PolyMatter' },
-  { id: 'UCsXVk37bltHxD1rDPwtNM8Q', name: 'Kurzgesagt – In a Nutshell' },
+  { id: 'UCxcrzzhQDj5zKJbXfIscCtg', name: 'ABC News In-depth' },
+  { id: 'UCTrQ7HXWRRxr7OsOtodr2_w', name: 'Channel 4 News' },
+  { id: 'UC_Lnb8ZHqqgLbp-7hltuT9w', name: 'CNA Insider' },
+  { id: 'UC-eegKVWEgBCa4OzjnK_PtA', name: 'TLDR News EU' },
+  { id: 'UCSMqateX8OA2s1wsOR2EgJA', name: 'TLDR News' },
+  { id: 'UC0p5jTq6Xx_DosDFxVXnWaQ', name: 'The Economist' },
+  { id: 'UCT3v6vL2H5HK4loLMc8pmCw', name: 'VisualPolitik EN' },
 ]
 
 // Shorts can run up to 3 minutes since Oct 2024, so anything at or under that is treated as
@@ -256,7 +267,8 @@ async function fetchCandidates(
 
       const viewCount = parseInt(item.statistics.viewCount ?? '0', 10)
       const ageHours = Math.max((now - Date.parse(item.snippet.publishedAt)) / 3_600_000, 1)
-      if (viewCount / ageHours < MIN_VIEWS_PER_HOUR) continue
+      const viewsPerHour = viewCount / ageHours
+      if (viewsPerHour < MIN_VIEWS_PER_HOUR) continue
 
       candidates.push({
         videoId: item.id,
@@ -268,6 +280,7 @@ async function fetchCandidates(
         subscribers: channel.subscribers,
         viewCount,
         publishedAt: item.snippet.publishedAt,
+        viewsPerHour,
       })
     }
   }
@@ -312,44 +325,53 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
     throw new Error(`Only ${unique.length} curated channel(s) had a qualifying video.`)
   }
 
-  // Pair on comparable channel reach and comparable current traction: a lopsided view count
-  // makes the race trivially predictable. Both thresholds are looser than they were under the
-  // trending pool — with a curated roster the ratios no longer double as a quality filter, so
-  // tight bounds bought nothing but a thinner, more repetitive set of pairs.
-  const SUBSCRIBER_RATIO_THRESHOLD = 10
+  // Two gates, each answering a different question.
+  //
+  // VIEW_RATIO is about what the voter *sees*: the question text quotes both view counts, and a
+  // pair reading "12k vs 900k" looks decided before the race starts, whatever the true odds.
+  //
+  // VELOCITY_RATIO is about what the race actually *measures* — the change in views over 12 h.
+  // Average views/hour estimates that directly. This replaced a subscriber-ratio gate, which was
+  // only ever a crude proxy for the same thing and priced out every cross-language pair: the
+  // English channels are an order of magnitude larger by subscriber count than the Swiss and
+  // German ones, so a 10× subscriber bound rejected them no matter how close the actual race was.
+  // Two videos moving at a similar rate make a close race whether their channels are 90k subs or
+  // 12M, and that is the only property worth gating on.
   const VIEW_RATIO_THRESHOLD = 3
-  // Among acceptable pairs, only the closest few by view count are considered, so a
-  // regeneration still varies but never lands on the loosest match the threshold allows.
+  const VELOCITY_RATIO_THRESHOLD = 3
+  // Among acceptable pairs, only the closest few are considered, so a regeneration still varies
+  // but never lands on the loosest match the thresholds allow.
   const CLOSEST_PAIR_POOL = 15
 
   const ratio = (a: number, b: number) => Math.max(a, b) / Math.max(Math.min(a, b), 1)
 
-  const acceptablePairs: { pair: [VideoCandidate, VideoCandidate]; viewRatio: number }[] = []
+  const acceptablePairs: { pair: [VideoCandidate, VideoCandidate]; velocityRatio: number }[] = []
   for (let i = 0; i < unique.length - 1; i++) {
     for (let j = i + 1; j < unique.length; j++) {
-      const viewRatio = ratio(unique[i].viewCount, unique[j].viewCount)
+      const velocityRatio = ratio(unique[i].viewsPerHour, unique[j].viewsPerHour)
       if (
-        ratio(unique[i].subscribers, unique[j].subscribers) <= SUBSCRIBER_RATIO_THRESHOLD &&
-        viewRatio <= VIEW_RATIO_THRESHOLD
+        ratio(unique[i].viewCount, unique[j].viewCount) <= VIEW_RATIO_THRESHOLD &&
+        velocityRatio <= VELOCITY_RATIO_THRESHOLD
       ) {
-        acceptablePairs.push({ pair: [unique[i], unique[j]], viewRatio })
+        acceptablePairs.push({ pair: [unique[i], unique[j]], velocityRatio })
       }
     }
   }
 
   if (acceptablePairs.length > 0) {
-    acceptablePairs.sort((a, b) => a.viewRatio - b.viewRatio)
+    acceptablePairs.sort((a, b) => a.velocityRatio - b.velocityRatio)
     const pool = acceptablePairs.slice(0, CLOSEST_PAIR_POOL)
     const [bestA, bestB] = pool[Math.floor(Math.random() * pool.length)].pair
     return { videoA: bestA, videoB: bestB }
   }
 
-  // No pair satisfied both thresholds — fall back to the pair with the closest view counts
+  // No pair satisfied both thresholds — fall back to the closest race available, ranked on
+  // velocity for the same reason the gate above uses it: it is what the 12 h window measures.
   let fallback: [VideoCandidate, VideoCandidate] = [unique[0], unique[1]]
   let closest = Infinity
   for (let i = 0; i < unique.length - 1; i++) {
     for (let j = i + 1; j < unique.length; j++) {
-      const r = ratio(unique[i].viewCount, unique[j].viewCount)
+      const r = ratio(unique[i].viewsPerHour, unique[j].viewsPerHour)
       if (r < closest) {
         closest = r
         fallback = [unique[i], unique[j]]
