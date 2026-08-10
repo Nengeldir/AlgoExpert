@@ -54,7 +54,7 @@ this app actually spends:
 
 | Action | Calls | Units |
 |---|---|---|
-| Drawing a pair (`/admin/youtube/suggest`) | 1 × `channels.list` + 33 × `playlistItems.list` + ~3 × `videos.list` | **~38** |
+| Drawing a pair (`/admin/youtube/suggest`) | 2 × `channels.list` + 51 × `playlistItems.list` + ~3 × `videos.list` | **~56** |
 | Opening a race (12:00) | 1 × `videos.list` | **1** |
 | Closing a race (24:00) | 1 × `videos.list` | **1** |
 
@@ -63,8 +63,8 @@ orders of magnitude of headroom. Two design choices buy that margin:
 
 - `services/youtube.ts` reads each curated channel's **uploads playlist**, which costs 1 unit
   per channel, rather than calling `search.list` at **100 units** per call (and capped at 100
-  calls/day for new projects). Reading a 33-channel roster outright is a third of the price of
-  a single search query.
+  calls/day for new projects). Reading the whole 51-channel roster costs about half what one
+  search query would, so the roster can grow a lot further before cost matters.
 - The five-minute race tick queries SQLite *first* and only touches the YouTube API when a
   race actually needs opening or closing. The 288 daily ticks are almost all free.
 
@@ -74,12 +74,26 @@ being shared with another project — rather than normal use.
 ### Which videos can be drawn
 
 Candidates come from a **hand-picked roster of channels** — `CURATED_CHANNELS` in
-`services/youtube.ts` — not from YouTube's trending charts. Roughly 35 channels: Swiss and
-German public-broadcaster documentary strands (SRF Dok, ARTE, ZDFinfo, NDR/WDR/SWR Doku,
-phoenix, 3sat NANO, Terra X), German-language explainer and science channels (Quarks,
-Simplicissimus, MrWissen2go, MAITHINK X, Dinge Erklärt), investigative reportage (STRG_F,
-Y-Kollektiv, SPIEGEL TV) and English-language current affairs (Vox, The Economist, Channel 4
-News, ABC News In-depth, CNA Insider, TLDR News, VisualPolitik).
+`services/youtube.ts` — not from YouTube's trending charts. Around 51 channels, 22 of them
+English-language:
+
+- **Swiss / German documentary** — SRF Dok, ARTE, ZDFinfo, NDR/WDR/SWR Doku, phoenix,
+  3sat NANO, Terra X, Terra Xplore, DW
+- **German explainer and science** — Quarks, Simplicissimus, MrWissen2go, MAITHINK X,
+  Dinge Erklärt, Breaking Lab, Doktor Whatson
+- **German investigative and satire** — STRG_F, Y-Kollektiv, SPIEGEL TV, ZDF Magazin Royale
+- **English current affairs** — BBC News, DW News, Sky News, PBS NewsHour, Channel 4 News,
+  ABC News In-depth, CNA Insider, VICE News, The Economist, TLDR News, VisualPolitik, Vox
+- **English science and economics** — SciShow, Numberphile, Sabine Hossenfelder, Dr. Becky,
+  Anton Petrov, Asianometry, Economics Explained, Money & Macro, DW Planet A
+
+English news broadcasters are included where German ones were not: the German side already
+carries three daily news sources, so more German news would crowd the pool rather than widen it.
+
+Two kinds of channel are kept off deliberately even though they clear the numeric bar —
+**advocacy outlets and think tanks**, whose editorial line is the product rather than an
+incidental slant, and **high-volume scripted content mills**. Neither is a judgment the filters
+can make, so it has to be made by hand.
 
 Four filters sit between the roster and a suggestion:
 

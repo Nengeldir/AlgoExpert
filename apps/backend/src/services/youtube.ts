@@ -64,11 +64,16 @@ export interface YoutubePair {
  *
  * A roster fixes both at once and is *cheaper* than the alternative: reading a channel's uploads
  * playlist costs 1 quota unit, against 100 for a `search` call. A full pass over this roster runs
- * ~38 units of the 10,000/day quota.
+ * ~56 units of the 10,000/day quota, so it can grow a lot further before cost is a consideration.
  *
  * The trade-off is editorial: this list, not an algorithm, decides what participants see. That is
  * deliberate — it is the only knob that reliably controls register — but it means the pool
  * inherits whatever bias the list has, so keep it broad across topic and language.
+ *
+ * Two kinds of channel are kept off deliberately, both of which would otherwise pass the numeric
+ * bar: advocacy outlets and think tanks (whose editorial line is the product rather than an
+ * incidental slant), and high-volume scripted content mills. Neither is a quality judgment the
+ * filters can make, so it has to live here.
  *
  * Maintenance: entries are channel IDs because handles get renamed. To add one, resolve its
  * handle via `channels?part=snippet&forHandle=NAME`. A channel that stops uploading simply stops
@@ -106,14 +111,21 @@ export const CURATED_CHANNELS: { id: string; name: string }[] = [
   { id: 'UCfa7jJFYnn3P5LdJXsFkrjw', name: 'STRG_F' },
   { id: 'UCLoWcRy-ZjA-Erh0p_VDLjQ', name: 'Y-Kollektiv' },
   { id: 'UC1w6pNGiiLdZgyNpXUnA4Zw', name: 'DER SPIEGEL' },
+  { id: 'UCNNEMxGKV1LsKZRt4vaIbvw', name: 'ZDF MAGAZIN ROYALE' },
+  { id: 'UCpHHy2MtCnrGaE7mirEhRvg', name: 'Terra Xplore' },
+
   // English-language current affairs and documentary.
   //
   // Chosen for *cadence and scale*, not just topic. The obvious picks — Veritasium, Kurzgesagt,
   // Johnny Harris, RealLifeLore — are dead weight here on both counts: they upload every 10–26
   // days, so they are usually absent from a 7-day window entirely, and when they do land their
   // videos sit at 1–5M views against 10–250k for the German documentary strands, so no pair
-  // clears the view-ratio gate. Measured Aug 2026, these seven upload at least twice a week and
-  // sit in the same 13k–190k band as the German channels, which is what lets them actually pair.
+  // clears the view-ratio gate. Everything below was measured (Aug 2026) to upload at least
+  // every ~10 days and to sit in the same 13k–350k band as the German channels.
+  //
+  // English news broadcasters are included where their German equivalents were not: the German
+  // side already carries three daily news sources (SRF News, ZDFheute, phoenix), so more German
+  // news would crowd the pool rather than widen it.
   { id: 'UCLXo7UDZvByw2ixzpQCufnA', name: 'Vox' },
   { id: 'UCxcrzzhQDj5zKJbXfIscCtg', name: 'ABC News In-depth' },
   { id: 'UCTrQ7HXWRRxr7OsOtodr2_w', name: 'Channel 4 News' },
@@ -122,6 +134,21 @@ export const CURATED_CHANNELS: { id: string; name: string }[] = [
   { id: 'UCSMqateX8OA2s1wsOR2EgJA', name: 'TLDR News' },
   { id: 'UC0p5jTq6Xx_DosDFxVXnWaQ', name: 'The Economist' },
   { id: 'UCT3v6vL2H5HK4loLMc8pmCw', name: 'VisualPolitik EN' },
+  { id: 'UCknLrEdhRCp1aegoMqRaCZg', name: 'DW News' },
+  { id: 'UC16niRr50-MSBwiO3YDb3RA', name: 'BBC News' },
+  { id: 'UCoMdktPbSTixAyNGwb-UYkQ', name: 'Sky News' },
+  { id: 'UC6ZFN9Tx6xh-skXCuRHCDpQ', name: 'PBS NewsHour' },
+  { id: 'UCZaT_X_mc0BI-djXOlfhqWQ', name: 'VICE News' },
+  // English-language science and economics explainer
+  { id: 'UCZYTClx2T1of7BRZ86-8fow', name: 'SciShow' },
+  { id: 'UCciQ8wFcVoIIMi-lfu8-cjQ', name: 'Anton Petrov' },
+  { id: 'UC1yNl2E66ZzKApQdRuTQ4tw', name: 'Sabine Hossenfelder' },
+  { id: 'UCYNbYGl89UUowy8oXkipC-Q', name: 'Dr. Becky' },
+  { id: 'UCoxcjq-8xIDTYp3uz647V5A', name: 'Numberphile' },
+  { id: 'UC1LpsuAUaKoMzzJSEt5WImw', name: 'Asianometry' },
+  { id: 'UCZ4AMrDcNrfy3X6nsU8-rPg', name: 'Economics Explained' },
+  { id: 'UCCKpicnIwBP3VPxBAZWDeNA', name: 'Money & Macro' },
+  { id: 'UCb72Gn5LXaLEcsOuPKGfQOg', name: 'DW Planet A' },
 ]
 
 // Shorts can run up to 3 minutes since Oct 2024, so anything at or under that is treated as
@@ -339,9 +366,16 @@ export async function fetchYoutubePair(apiKey: string): Promise<YoutubePair> {
   // 12M, and that is the only property worth gating on.
   const VIEW_RATIO_THRESHOLD = 3
   const VELOCITY_RATIO_THRESHOLD = 3
-  // Among acceptable pairs, only the closest few are considered, so a regeneration still varies
-  // but never lands on the loosest match the thresholds allow.
-  const CLOSEST_PAIR_POOL = 15
+  // Among acceptable pairs, only the closest are considered, so a regeneration still varies but
+  // never lands on the loosest match the thresholds allow.
+  //
+  // Sized by measurement, because closeness costs almost nothing here: on a typical pool (312
+  // acceptable pairs, 46 channels) widening 15 → 40 moved the worst velocity ratio in the pool
+  // from 1.05 to only 1.16, while the channels reachable at all went from 19 to 36. Below ~40
+  // the same handful of near-identical pairs win every regeneration and the suggestions visibly
+  // repeat. On a quiet day there may be fewer than 40 pairs in total, which is harmless — the
+  // slice just takes what exists.
+  const CLOSEST_PAIR_POOL = 40
 
   const ratio = (a: number, b: number) => Math.max(a, b) / Math.max(Math.min(a, b), 1)
 
