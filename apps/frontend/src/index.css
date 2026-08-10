@@ -1497,3 +1497,375 @@ input[type='datetime-local']:focus {
   font-size: var(--font-size-xs);
   color: var(--color-outline);
 }
+
+/* ---------------------------------------------------------------------------
+   Admin predictor view
+
+   Charts are hand-rolled SVG on the --chart-* tokens. Nothing here hardcodes a
+   colour; both themes come from tokens.css.
+--------------------------------------------------------------------------- */
+
+.alert--warning {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.predictor-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.config-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-low);
+  font-size: var(--font-size-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.config-chip strong {
+  font-family: var(--font-mono);
+  color: var(--color-on-surface);
+}
+
+.config-chip--locked {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tick-log-line {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  margin: 0;
+}
+
+/* --- stat tiles --- */
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+}
+
+/* The predictor score is the one number this page exists to show. */
+.stat-tile--hero {
+  border-color: var(--chart-wm);
+  border-width: 2px;
+}
+
+.stat-tile__label {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
+
+.stat-tile__value {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+  color: var(--color-on-surface);
+}
+
+.stat-tile--hero .stat-tile__value {
+  color: var(--chart-wm);
+}
+
+.stat-tile__of {
+  font-size: var(--font-size-xl);
+  color: var(--color-outline);
+}
+
+.stat-tile__sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.predictor-progress {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-on-surface-variant);
+}
+
+.section-note {
+  font-size: var(--font-size-sm);
+  color: var(--color-on-surface-variant);
+  margin-bottom: var(--space-4);
+  max-width: 68ch;
+}
+
+.empty-state__detail {
+  font-size: var(--font-size-sm);
+  color: var(--color-on-surface-variant);
+  margin-top: var(--space-3);
+}
+
+/* --- charts --- */
+
+.chart {
+  margin: 0;
+}
+
+.chart__plot {
+  position: relative;
+}
+
+.chart__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart__tick,
+.chart__axis-title,
+.chart__rule-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  fill: var(--color-on-surface-variant);
+}
+
+.chart__rule-label {
+  fill: var(--color-outline);
+}
+
+.chart__direct-label {
+  font-family: var(--font-family);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.chart__tooltip {
+  position: absolute;
+  top: var(--space-2);
+  z-index: 2;
+  min-width: 12rem;
+  padding: var(--space-3);
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.chart__tooltip-title {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-2);
+  color: var(--color-on-surface);
+}
+
+.chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.chart__tooltip-row strong {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  color: var(--color-on-surface);
+}
+
+.chart__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart__swatch--square {
+  border-radius: 2px;
+  width: 16px;
+  height: 12px;
+}
+
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.chart__legend--between {
+  justify-content: space-between;
+}
+
+.chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chart-empty {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-on-surface-variant);
+  font-size: var(--font-size-sm);
+}
+
+/* --- weight heatmap --- */
+
+.heatmap-scroll {
+  overflow-x: auto;
+}
+
+.heatmap {
+  border-collapse: separate;
+  /* 2px gap so adjacent fills never merge into one block */
+  border-spacing: 2px;
+}
+
+.heatmap__corner,
+.heatmap__col-head,
+.heatmap__row-head {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-on-surface-variant);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.heatmap__col-head {
+  text-align: center;
+  min-width: 1.5rem;
+}
+
+.heatmap__row-head {
+  padding-right: var(--space-2);
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heatmap__cell {
+  width: 1.5rem;
+  height: 1.25rem;
+  border-radius: 2px;
+}
+
+.heatmap__cell:hover {
+  outline: 2px solid var(--color-on-surface);
+  outline-offset: 1px;
+}
+
+/* --- bound meters --- */
+
+.bounds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.bound__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.bound__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.bound__track {
+  position: relative;
+  height: 0.75rem;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.bound__fill {
+  height: 100%;
+  background: var(--chart-wm);
+  border-radius: var(--radius-sm);
+}
+
+/* The ceiling is a rule on the same track, not a second bar — one axis. */
+.bound__ceiling {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-on-surface);
+}
+
+.bound__numbers {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.bound__numbers strong {
+  font-family: var(--font-mono);
+  color: var(--color-on-surface);
+}
+
+.bound__formula {
+  margin-top: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-outline);
+}
+
+/* --- tables --- */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.numeric {
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.source-badge {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-label);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+.source-badge--smi {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.source-badge--youtube {
+  background: var(--color-error-light);
+  color: var(--color-on-error-container);
+}

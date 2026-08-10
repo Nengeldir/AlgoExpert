@@ -72,6 +72,7 @@ All four jobs use:
 | SMI — resolve question | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET. Change to `30 15 * * 1-5` during CEST |
 | YouTube — race tick | `/admin/youtube/resolve` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Drives **both** ends of the race (see below) |
 | Notify — new questions | `/admin/notifications/dispatch` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Emails participants once a question is actually visible |
+| Predictor — tick | `/admin/predictor/tick` | `*/5 * * * *` | Every 5 min; timezone-agnostic. Commits the Weighted Majority prediction when voting closes, scores it when the truth lands |
 
 **SMI timezone note:** Switzerland observes CET (UTC+1) in winter and CEST (UTC+2) in summer; the schedules above are UTC. cron-job.org carries a per-job time zone (defaulting to UTC), so the fix is to set the SMI jobs to `Europe/Zurich` and schedule them at 08:00 / 17:30 local. On a scheduler without time zone support, run both UTC offset schedules year-round instead — all endpoints are idempotent so duplicate calls are harmless.
 
@@ -150,6 +151,9 @@ fails if `content/` and the nav disagree, and it verifies every internal link re
 | `services/email.ts` | Resend transport: `sendPasswordResetEmail`, `sendBatchEmails` (one message per recipient — never one email with many `to`) |
 | `services/push.ts` | `sendPushToAll` — best-effort web push fan-out via `web-push`; prunes subscriptions the push service reports as gone (404/410) |
 | `services/notifications.ts` | `dispatchNewQuestionEmails` — announces newly visible questions to opted-in users (email + push) |
+| `services/predictorEngine.ts` | Pure Expert Algorithm: `predict`, `updateWeights`, `seededFill`, the bounds. TypeScript twin of `analysis/expert_algorithm.py` |
+| `services/predictor.ts` | `tickPredictor` (commit + score, idempotent), `buildPredictorView` (read model), `ensureSeason` (frozen config) |
+| `routes/predictor.ts` | `POST /admin/predictor/tick`, `GET /admin/predictor`, `GET|POST /admin/predictor/season` |
 
 **Auth flow:** `POST /api/auth/register` (pseudonym + email + password) → bcrypt hash → JWT (30 d). `POST /api/auth/login` takes `{ identifier, password }`, where `identifier` matches either `pseudonym` or `email` (`WHERE pseudonym = ? OR email = ?`). Email is never shown publicly — it exists only for login/recovery, to preserve the pseudonymous identity used in lecture. All `/api/*` routes use `preHandler: [app.authenticate]`. All `/admin/*` routes use `addHook('preHandler', requireAdmin)` which checks the `Authorization: Bearer <ADMIN_TOKEN>` header against the env var.
 
@@ -159,7 +163,17 @@ fails if `content/` and the nav disagree, and it verifies every internal link re
 
 **Web push:** the frontend registers `public/sw.js` on load (`main.tsx`); `Settings.tsx` requests notification permission and calls `PushManager.subscribe()` with the key from `GET /api/push/vapid-public-key`, then `POST /api/push/subscribe` persists `{ endpoint, p256dh, auth }`. Requires `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` (generate with `npx web-push generate-vapid-keys`) — without them `/api/push/vapid-public-key` 503s and `sendPushToAll` logs instead of sending, mirroring the `RESEND_API_KEY`-unset fallback. iOS Safari's web push support is patchier than Android/desktop, so this is additive to email, not a replacement.
 
-**SQLite schema:** `users`, `password_resets`, `questions`, `votes`, `push_subscriptions` (plus `smi_questions`/`youtube_suggestions` for automated question sources). `votes.is_correct` is `NULL` until resolved, then `0|1`. The resolve endpoint runs a transaction that sets `ground_truth` on the question and bulk-updates `is_correct` on all votes in one shot.
+**Live predictor:** `POST /admin/predictor/tick` runs the Expert Algorithm against the class as the window unfolds and `/admin/predictor` renders it. Three invariants, all of which exist because the regret bound holds *only* if the aggregate commits before the truth using past losses alone, with the rate fixed in advance:
+
+- **The ledger is append-only.** `predictor_rounds` stores the weight vector and the vote set (including the seeded fills) as they were at the deadline, and is never recomputed. Recomputing on read would silently let a late-arriving vote or a retuned rate rewrite history. `DELETE /admin/questions/:id` 409s once a round has been committed for that question.
+- **Questions sharing a deadline are one batch.** SMI and YouTube both close at 12:00; predicting them sequentially would let the first one's truth — not known until 17:30/24:00 — inform the second one's weights. All rows in a batch share `weights_json`, and the batch is scored only when every question in it has resolved.
+- **The config freezes on first commit.** `predictor_season` (window, learning rate, tie-break, fill seed, expert pool) is written before the first prediction; `POST /admin/predictor/season` 409s afterwards. The expert pool is frozen the first time voting closes, because `ln(N)` feeds both the rate and every bound.
+
+Non-voters get a **seeded** coin flip (`seededFill` hashes seed+question+pseudonym), matching the class policy in `docs/algorithm.md` while staying identical across replays. Defaults: window 2026-08-28 → 2026-09-11, T=26, anytime rate `η_t = sqrt(8 ln N / t)` — override with `PREDICTOR_SEASON_START`/`_END`/`_T_PLANNED`/`_FILL_SEED`/`_RATE_MODE`.
+
+**Two conventions, one algorithm.** `analysis/expert_algorithm.py` uses the slides' reward variant (`w *= 1+G` on correct); the backend uses the handout's penalty variant (`w *= e^-η` on wrong). After renormalisation these are identical with **`η = ln(1+G)`**. `predictorEngine.test.ts` replays `analysis/fixture_slides.csv` through both and asserts every round agrees — don't mix the rates without converting.
+
+**SQLite schema:** `users`, `password_resets`, `questions`, `votes`, `push_subscriptions` (plus `smi_questions`/`youtube_suggestions` for automated question sources, and `predictor_season`/`predictor_rounds` for the live predictor). `votes.is_correct` is `NULL` until resolved, then `0|1`. The resolve endpoint runs a transaction that sets `ground_truth` on the question and bulk-updates `is_correct` on all votes in one shot.
 
 **Testing:** `src/test/helpers.ts` builds a full app wired to `:memory:` SQLite — no disk I/O, no shared state between suites. Tests run serially (`singleFork: true`) because better-sqlite3 is synchronous and single-writer.
 
@@ -169,7 +183,8 @@ fails if `content/` and the nav disagree, and it verifies every internal link re
 |------|---------|
 | `api/client.ts` | All `fetch` calls, token storage (`localStorage`), `ApiError` class, shared response types |
 | `App.tsx` | Router, `<Header>`, `<RequireAuth>` guard |
-| `pages/` | `Register`, `Login`, `ForgotPassword`, `ResetPassword`, `Today` (voting), `History`, `Settings` |
+| `pages/` | `Register`, `Login`, `ForgotPassword`, `ResetPassword`, `Today` (voting), `History`, `Settings`, `AdminLogin`, `AdminQuestions`, `AdminPredictor` |
+| `components/PredictorCharts.tsx` | Hand-rolled SVG charts for the predictor view — no charting dependency; colours come from the `--chart-*` tokens |
 | `tokens.css` | CSS custom properties — **single source of truth** for all colors, spacing, typography |
 | `index.css` | Reset + all component styles, imports `tokens.css` |
 

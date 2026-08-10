@@ -74,6 +74,61 @@ CREATE TABLE IF NOT EXISTS youtube_suggestions (
   created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- The predictor's frozen configuration. Exactly one row (id = 1).
+--
+-- Written before the first round is committed and then effectively immutable: the
+-- learning rate, the expert pool and the fill seed all have to be fixed *ahead of the
+-- data* or the regret bound does not apply. Storing them makes that auditable rather
+-- than a claim.
+CREATE TABLE IF NOT EXISTS predictor_season (
+  id              INTEGER PRIMARY KEY CHECK(id = 1),
+  window_start    TEXT    NOT NULL,
+  window_end      TEXT    NOT NULL,
+  t_planned       INTEGER NOT NULL,
+  rate_mode       TEXT    NOT NULL CHECK(rate_mode IN ('fixed', 'anytime')),
+  learning_rate   REAL    NOT NULL,
+  tie_break       TEXT    NOT NULL DEFAULT 'A' CHECK(tie_break IN ('A', 'B')),
+  fill_seed       INTEGER NOT NULL,
+  -- Both NULL until the first batch is committed, then frozen: the pool is the set of
+  -- users who existed when voting first closed. ln(N) feeds the learning rate and every
+  -- bound, so it must not drift as people register later in the window.
+  n_experts       INTEGER,
+  expert_pool_json TEXT,
+  created_at      TEXT    NOT NULL
+);
+
+-- One row per (question, prediction). Append-only ledger.
+--
+-- weights_json is the weight vector the predictor held when it committed, and is never
+-- recomputed afterwards — replaying it later with hindsight is precisely the thing the
+-- no-cheating precondition forbids. Questions that share a batch_key (their deadline)
+-- were predicted simultaneously and therefore share one weight vector: their truths are
+-- not revealed until both have closed, so neither may inform the other.
+CREATE TABLE IF NOT EXISTS predictor_rounds (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  question_id   INTEGER NOT NULL UNIQUE REFERENCES questions(id),
+  batch_key     TEXT    NOT NULL,
+  round_index   INTEGER NOT NULL,
+  committed_at  TEXT    NOT NULL,
+  learning_rate REAL    NOT NULL,
+  weights_json  TEXT    NOT NULL,
+  votes_json    TEXT    NOT NULL,
+  weight_a      REAL    NOT NULL,
+  weight_b      REAL    NOT NULL,
+  n_voters      INTEGER NOT NULL,
+  n_manual      INTEGER NOT NULL,
+  wm_prediction TEXT    NOT NULL CHECK(wm_prediction IN ('A', 'B')),
+  mv_prediction TEXT    NOT NULL CHECK(mv_prediction IN ('A', 'B')),
+  truth         TEXT    CHECK(truth IN ('A', 'B')),
+  wm_correct    INTEGER,
+  mv_correct    INTEGER,
+  p_follow_i    REAL,
+  scored_at     TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_predictor_rounds_batch ON predictor_rounds(batch_key);
+CREATE INDEX IF NOT EXISTS idx_predictor_rounds_order ON predictor_rounds(round_index);
+
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id    INTEGER NOT NULL REFERENCES users(id),

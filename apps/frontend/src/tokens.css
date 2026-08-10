@@ -50,6 +50,21 @@
   --color-neutral-800: var(--color-on-surface);
   --color-white: #ffffff;
 
+  /* Chart palette (admin predictor view).
+     Validated for CVD separation, chroma and contrast against the card surface in both
+     themes — see the dataviz validator run in the commit that added AdminPredictor.
+     Only the two *learners* get an identity hue; the expert benchmarks are neutral ink
+     with dash patterns, which is why a 30-student cohort never needs 30 colors. */
+  --chart-wm: #2c5fb8;
+  --chart-follow-i: #b45309;
+  --chart-ref: var(--color-on-surface-variant);
+  --chart-grid: var(--color-outline-variant);
+  /* Sequential ramp for the weight heatmap — one hue, light to dark */
+  --chart-seq-1: #8fb2e2;
+  --chart-seq-2: #5e8ed0;
+  --chart-seq-3: #3768bd;
+  --chart-seq-4: #1e478f;
+
   /* Typography — Inter for UI/prose, JetBrains Mono for labels & data */
   --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;
@@ -133,4 +148,14 @@
   --color-outline-variant: #3a4048;
   --color-on-surface: #e7e9ee;
   --color-on-surface-variant: #b4b8c5;
+
+  /* Dark mode is stepped separately, not flipped: these are re-validated against the
+     dark card surface (--color-surface-container-lowest), which is lighter than the
+     page background and would fail the light-mode steps. */
+  --chart-wm: #5b8fdd;
+  --chart-follow-i: #c08a1e;
+  --chart-seq-1: #6a7e9d;
+  --chart-seq-2: #5c95cd;
+  --chart-seq-3: #5fb0f0;
+  --chart-seq-4: #a8d2fb;
 }

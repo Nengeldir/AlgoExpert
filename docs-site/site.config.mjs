@@ -26,6 +26,7 @@ export const nav = [
       { file: 'daily-operations.md', title: 'Daily operations', slug: 'daily-operations' },
       { file: 'question-lifecycle.md', title: 'Question lifecycle', slug: 'question-lifecycle' },
       { file: 'admin-console.md', title: 'Admin console', slug: 'admin-console' },
+      { file: 'predictor.md', title: 'Live predictor', slug: 'predictor' },
       { file: 'cron-setup.md', title: 'Cron setup', slug: 'cron-setup' },
     ],
   },

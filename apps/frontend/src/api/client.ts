@@ -205,7 +205,108 @@ export interface YoutubeSuggestion {
   created_at: string
 }
 
+export interface PredictorRound {
+  round_index: number
+  batch_key: string
+  question_id: number
+  title: string
+  source: 'smi' | 'youtube' | 'manual'
+  deadline: string
+  committed_at: string
+  learning_rate: number
+  weight_a: number
+  weight_b: number
+  n_voters: number
+  n_manual: number
+  wm_prediction: 'A' | 'B'
+  mv_prediction: 'A' | 'B'
+  truth: 'A' | 'B' | null
+  wm_correct: 0 | 1 | null
+  mv_correct: 0 | 1 | null
+  p_follow_i: number | null
+  scored_at: string | null
+}
+
+export interface PredictorSeriesPoint {
+  round_index: number
+  label: string
+  wm: number
+  follow_i: number
+  plain_majority: number
+  best_expert: number
+  mean_expert: number
+}
+
+export interface PredictorExpert {
+  pseudonym: string
+  answered: number
+  manual_answered: number
+  correct: number
+  rate_over_all_rounds: number
+  rate_over_answered: number
+  final_weight_share: number
+}
+
+export interface PredictorView {
+  season: {
+    window_start: string
+    window_end: string
+    t_planned: number
+    rate_mode: 'fixed' | 'anytime'
+    tie_break: 'A' | 'B'
+    fill_seed: number
+    n_experts: number | null
+    current_eta: number
+    current_growth_rate: number
+    locked: boolean
+  }
+  pool: string[]
+  rounds: PredictorRound[]
+  series: PredictorSeriesPoint[]
+  weight_history: { round_index: number; shares: Record<string, number> }[]
+  experts: PredictorExpert[]
+  headline: {
+    n_committed: number
+    n_scored: number
+    n_pending: number
+    wm_correct: number
+    wm_rate: number
+    follow_i_rate: number
+    plain_majority_rate: number
+    best_expert_rate: number
+    mean_expert_rate: number
+    median_expert_rate: number
+    manual_participation: number
+  }
+  bounds: {
+    follow_i_loss: number
+    best_expert_loss: number
+    hedge_loss_bound: number
+    hedge_holds: boolean
+    regret_term: number
+    regret_label: string
+    wm_mistakes: number
+    best_expert_mistakes: number
+    wm_mistake_bound: number
+    wm_holds: boolean
+    slides_guarantee: number
+    slides_holds: boolean
+    not_yet_informative: boolean
+  }
+}
+
 export const adminApi = {
+  getPredictor() {
+    return adminRequest<PredictorView>('/admin/predictor')
+  },
+
+  tickPredictor() {
+    return adminRequest<{ ok: boolean; log: string[] }>('/admin/predictor/tick', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  },
+
   listQuestions() {
     return adminRequest<{ questions: AdminQuestion[] }>('/admin/questions')
   },

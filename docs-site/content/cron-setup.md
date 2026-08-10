@@ -32,6 +32,7 @@ default.
 | SMI — resolve | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET, weekdays |
 | YouTube — tick | `/admin/youtube/resolve` | `*/15 * * * *` | Every 15 minutes, all week |
 | Notify — new questions | `/admin/notifications/dispatch` | `*/15 * * * *` | Every 15 minutes, all week |
+| Predictor — tick | `/admin/predictor/tick` | `*/5 * * * *` | Every 5 minutes, all week |
 
 Prefix each path with your backend's public URL, e.g.
 `https://your-backend.up.railway.app/admin/smi/daily`.

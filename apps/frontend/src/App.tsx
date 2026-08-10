@@ -17,6 +17,7 @@ import History from './pages/History'
 import Settings from './pages/Settings'
 import AdminLogin from './pages/AdminLogin'
 import AdminQuestions from './pages/AdminQuestions'
+import AdminPredictor from './pages/AdminPredictor'
 import Logo from './components/Logo'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -49,12 +50,20 @@ const NAV_ITEMS = [
 /* Admin is not part of the participant-facing nav — it only appears once an
    admin token has been accepted. Reaching it the first time means navigating
    to /admin/login by hand, which keeps the UI unambiguous for participants. */
-const ADMIN_NAV_ITEM = {
-  to: '/admin/questions',
-  icon: 'admin_panel_settings',
-  label: 'Admin View',
-  shortLabel: 'Admin',
-}
+const ADMIN_NAV_ITEMS = [
+  {
+    to: '/admin/questions',
+    icon: 'admin_panel_settings',
+    label: 'Admin View',
+    shortLabel: 'Admin',
+  },
+  {
+    to: '/admin/predictor',
+    icon: 'insights',
+    label: 'Predictor',
+    shortLabel: 'Predictor',
+  },
+]
 
 /* App shell: desktop sidebar + mobile top bar + mobile bottom nav.
    Logout is always red and bottom-right; the bottom nav is a single shared
@@ -64,7 +73,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const userLoggedIn = isLoggedIn()
   const adminLoggedIn = isAdminLoggedIn()
-  const navItems = adminLoggedIn ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
+  const navItems = adminLoggedIn ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS
 
   function handleLogout() {
     clearToken()
@@ -195,6 +204,16 @@ export default function App() {
             <RequireAdmin>
               <Layout>
                 <AdminQuestions />
+              </Layout>
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/predictor"
+          element={
+            <RequireAdmin>
+              <Layout>
+                <AdminPredictor />
               </Layout>
             </RequireAdmin>
           }

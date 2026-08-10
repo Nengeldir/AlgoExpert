@@ -12,6 +12,7 @@ import { pushRoutes } from './routes/push'
 import { adminRoutes } from './routes/admin'
 import { youtubeRoutes } from './routes/youtube'
 import { smiRoutes } from './routes/smi'
+import { predictorRoutes } from './routes/predictor'
 
 const app = Fastify({
   logger: {
@@ -69,6 +70,7 @@ async function start() {
   await app.register(adminRoutes, { prefix: '/admin' })
   await app.register(youtubeRoutes, { prefix: '/admin/youtube' })
   await app.register(smiRoutes, { prefix: '/admin/smi' })
+  await app.register(predictorRoutes, { prefix: '/admin/predictor' })
 
   const port = parseInt(process.env.PORT ?? '3000', 10)
   await app.listen({ port, host: '0.0.0.0' })

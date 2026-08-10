@@ -169,6 +169,22 @@ export async function adminRoutes(app: FastifyInstance) {
       const question = app.db.prepare('SELECT id FROM questions WHERE id = ?').get(questionId)
       if (!question) return reply.status(404).send({ error: 'Question not found.' })
 
+      // The predictor's ledger is append-only: once it has committed a prediction for this
+      // question, deleting it would rewrite the run's history and invalidate every weight
+      // downstream. Questions can still be deleted freely before their deadline, which is
+      // the case that actually matters (spotting a bad pair in the morning).
+      const committed = app.db
+        .prepare('SELECT round_index FROM predictor_rounds WHERE question_id = ?')
+        .get(questionId) as { round_index: number } | undefined
+
+      if (committed) {
+        return reply.status(409).send({
+          error:
+            `The predictor already committed a prediction for this question ` +
+            `(round ${committed.round_index}). Deleting it would rewrite the run's history.`,
+        })
+      }
+
       app.db.transaction(() => {
         app.db.prepare('DELETE FROM votes WHERE question_id = ?').run(questionId)
         // Remove the YouTube suggestion that published this question so a fresh one can be fetched

@@ -11,11 +11,45 @@ hindsight**, without knowing in advance who that is.
 Learning from Experts"). The method is the *Multiplicative Weight Update*
 method; see also Littlestone & Warmuth (1994) and Arora, Hazan & Kale (2012).
 
-> The implementation follows the **slides**, which use the reward variant
+> The offline analysis follows the **slides**, which use the reward variant
 > (grow the winners) and a randomized learner. This differs from the penalty
 > variant (`w *= β` on a mistake, deterministic weighted majority) found in much
-> of the literature — the two are closely related but produce different numbers,
-> so don't mix them.
+> of the literature — don't mix the two rates without converting.
+
+### The two conventions are the same algorithm
+
+`analysis/expert_algorithm.py` grows the winners; the live predictor in
+`apps/backend/src/services/predictorEngine.ts` shrinks the losers. Because every
+quantity either one reads is a *ratio* of weights, multiplying the correct by
+`1+G` and renormalising is identical to multiplying the wrong by `e^-η`, with
+
+```
+η = ln(1 + G)          G = e^η - 1
+```
+
+So `G = 1` (the slides' "double the winners") is `η = ln 2`, i.e. `β = ½` — the
+classic Littlestone–Warmuth setting. `predictorEngine.test.ts` replays
+`analysis/fixture_slides.csv` through both implementations and asserts every
+round's prediction, success rate and final weight matches. The admin view shows
+both `η` and `G` so either can be quoted without converting by hand.
+
+### Two learners, two bounds
+
+The same weights give a randomized learner and a deterministic one, and they do
+**not** share a guarantee:
+
+| Learner | Loss | Bound |
+|---|---|---|
+| Follow *i* | fractional (the weight on the wrong answer) | Hedge: `L_A ≤ L_best + ln(N)/η + ηT/8` |
+| Weighted Majority | 0 or 1 per round | `M_A ≤ (η·M_best + ln N) / ln(2/(1+β))`, i.e. `2.41(M_best + log₂N)` at `β = ½` |
+
+### Simultaneous questions are one round, not two
+
+SMI and YouTube questions close at the same instant. Updating the weights after
+the first before predicting the second would use a truth that is not revealed
+until hours later — the prediction assumption breaks and neither bound applies.
+The live predictor therefore predicts every question sharing a deadline from one
+weight vector and applies their losses together.
 
 ## How it works
 
