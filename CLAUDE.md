@@ -62,7 +62,7 @@ curl -H "Authorization: Bearer dev-admin-token" "http://localhost:3000/admin/exp
 
 All automated question creation, resolution, and participant notification is driven by external HTTP cron jobs rather than in-process timers, so the Railway container can sleep between requests.
 
-All four jobs use:
+All five jobs use:
 - **Method:** `POST`
 - **Header:** `Authorization: Bearer <ADMIN_TOKEN>` (the value set in Railway's environment variables)
 

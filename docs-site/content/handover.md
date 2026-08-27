@@ -164,7 +164,7 @@ knowledge that they exist.
 | Service | What to do | Where |
 |---|---|---|
 | Google Cloud / YouTube key | Create fresh on their own Google account | [External services](external-services.html#youtube-data-api-key) |
-| cron-job.org | Create an account, recreate the four jobs | [Cron setup](cron-setup.html#creating-the-jobs-step-by-step) |
+| cron-job.org | Create an account, recreate the five jobs | [Cron setup](cron-setup.html#creating-the-jobs-step-by-step) |
 | Resend | Join your team, claim the domain, or start fresh | [External services](external-services.html#handing-resend-over) |
 | VAPID keypair | **Do not regenerate** — keep the existing values | [External services](external-services.html#the-vapid-keypair) |
 
@@ -178,7 +178,7 @@ Do this **after** the transfer, not before, or you will lock the successor out o
 they have not received yet.
 
 - **`ADMIN_TOKEN`** — your admin access dies the moment it changes. Then update the
-  `Authorization` header on all four cron jobs, or they start returning `403`. This is the
+  `Authorization` header on all five cron jobs, or they start returning `403`. This is the
   single most forgotten step of the whole handover.
 - **`JWT_SECRET`** — logs every student out. Harmless if the accounts are being wiped
   anyway.
