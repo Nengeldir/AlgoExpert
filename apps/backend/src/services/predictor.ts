@@ -20,20 +20,24 @@ import {
 } from './predictorEngine'
 
 /**
- * Defaults for the lecture window: 31 Aug – 11 Sep 2026.
+ * Defaults for the lecture window: 31 Aug – 10 Sep 2026.
  *
  * The window opens on the Monday, not the Friday of the kickoff: the SMI question needs a
  * trading day, so nothing can be asked over the weekend anyway, and the later start gives
  * anyone who missed the kickoff the weekend to register.
  *
- * T = 22 questions: SMI runs weekdays only (10 of the 12 days), YouTube runs daily (12).
+ * It closes on the Thursday, not the Friday of the lecture weekend: the last YouTube race
+ * ends at midnight, so ending a day early leaves Friday free to run the predictor and
+ * build the slides without racing the deadline.
+ *
+ * T = 20 questions: SMI runs weekdays only (9 of the 11 days), YouTube runs daily (11).
  * It is a *planned* horizon — the anytime learning rate does not depend on it, so a
  * YouTube pair you decide not to approve costs nothing but a slightly stale progress
  * counter in the view.
  */
 const DEFAULT_SEASON_START = '2026-08-31'
-const DEFAULT_SEASON_END = '2026-09-11'
-const DEFAULT_T_PLANNED = 22
+const DEFAULT_SEASON_END = '2026-09-10'
+const DEFAULT_T_PLANNED = 20
 const DEFAULT_FILL_SEED = 20260831
 /** Cohort size assumed only to seed the stored fallback rate before the pool is frozen. */
 const ASSUMED_N = 30
