@@ -20,17 +20,21 @@ import {
 } from './predictorEngine'
 
 /**
- * Defaults for the lecture window: 28 Aug – 11 Sep 2026.
+ * Defaults for the lecture window: 31 Aug – 11 Sep 2026.
  *
- * T = 26 questions: SMI runs weekdays only (11 of the 15 days), YouTube runs daily (15).
+ * The window opens on the Monday, not the Friday of the kickoff: the SMI question needs a
+ * trading day, so nothing can be asked over the weekend anyway, and the later start gives
+ * anyone who missed the kickoff the weekend to register.
+ *
+ * T = 22 questions: SMI runs weekdays only (10 of the 12 days), YouTube runs daily (12).
  * It is a *planned* horizon — the anytime learning rate does not depend on it, so a
  * YouTube pair you decide not to approve costs nothing but a slightly stale progress
  * counter in the view.
  */
-const DEFAULT_SEASON_START = '2026-08-28'
+const DEFAULT_SEASON_START = '2026-08-31'
 const DEFAULT_SEASON_END = '2026-09-11'
-const DEFAULT_T_PLANNED = 26
-const DEFAULT_FILL_SEED = 20260828
+const DEFAULT_T_PLANNED = 22
+const DEFAULT_FILL_SEED = 20260831
 /** Cohort size assumed only to seed the stored fallback rate before the pool is frozen. */
 const ASSUMED_N = 30
 
@@ -256,12 +260,18 @@ function commitDueBatches(
   let pool = seasonPool(season)
 
   for (const batch of groupByDeadline(due)) {
-    // Freeze the expert pool the first time voting closes inside the window. Everyone who
-    // had an account by then is an expert for the whole season, present or not; anyone
-    // registering later votes normally but sits outside the predictor, because ln(N) feeds
-    // the learning rate and every bound and must not move.
+    // Freeze the expert pool against the *end* of the window, not the first deadline.
+    // Everyone holding an account when the window closes is an expert for the whole
+    // season: days before they registered are filled like any other missing vote, so a
+    // late joiner is simply an expert who guessed early on. N is therefore fixed across
+    // the entire run — decided late, but never moving mid-run, which is what ln(N) in the
+    // learning rate and in the bound requires.
+    //
+    // This holds only if no round is committed while registrations are still open: the
+    // first tick freezes the pool and the guard below never recomputes it. The predictor
+    // cron must therefore stay paused until the window has closed — see cron-setup.md.
     if (pool.length === 0) {
-      pool = freezeExpertPool(db, batch[0].deadline)
+      pool = freezeExpertPool(db, season.window_end)
       if (pool.length === 0) {
         log(`[predictor] batch ${batch[0].deadline} skipped — no registered users to run over`)
         continue

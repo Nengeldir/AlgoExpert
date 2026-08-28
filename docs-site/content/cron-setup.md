@@ -32,7 +32,7 @@ default.
 | SMI — resolve | `/admin/smi/resolve` | `30 16 * * 1-5` | 17:30 UTC = 18:30 CET, weekdays |
 | YouTube — tick | `/admin/youtube/resolve` | `*/15 * * * *` | Every 15 minutes, all week |
 | Notify — new questions | `/admin/notifications/dispatch` | `*/15 * * * *` | Every 15 minutes, all week |
-| Predictor — tick | `/admin/predictor/tick` | `*/5 * * * *` | Every 5 minutes, all week |
+| Predictor — tick | `/admin/predictor/tick` | `*/5 * * * *` | Every 5 minutes — **paused until the season window has closed**, see below |
 
 Prefix each path with your backend's public URL, e.g.
 `https://your-backend.up.railway.app/admin/smi/daily`.
@@ -40,6 +40,12 @@ Prefix each path with your backend's public URL, e.g.
 > **Note:** The YouTube job drives **both** ends of the race — it snapshots baselines at
 > 12:00 and resolves at 24:00. It is not "the resolve job" despite the URL. Running it
 > every five minutes keeps the real measured window close to the nominal twelve hours.
+
+> **Warning:** Keep the **predictor tick disabled** until the season window has closed.
+> The first tick freezes the expert pool and the pool is never recomputed, so a tick while
+> registrations are still open locks in a smaller cohort and silently drops everyone who
+> joins later. Enable the job once, after the last question of the window has resolved.
+> The other four jobs run normally throughout — participants never see the predictor.
 
 > **Note:** The notification job is what emails participants that a question is open.
 > Without it, questions still publish on time but nobody is told. It is a separate job

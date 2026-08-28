@@ -147,23 +147,42 @@ describe('committing predictions', () => {
     expect(buildPredictorView(app.db).rounds).toHaveLength(1)
   })
 
-  it('freezes the expert pool at the first close and ignores later registrations', () => {
-    addUser('Ada')
+  it('freezes the pool against the end of the window, so a late joiner still counts', () => {
+    const ada = addUser('Ada')
     addUser('Bob')
     const q1 = addQuestion(DAY_1_CLOSE)
-    tickPredictor(app.db, silent, AFTER_DAY_1)
+    addVote(ada, q1, 'A')
 
-    // Cy joins after the predictor started; they vote normally but are not an expert.
+    // Cy registers after the first question closed but while the window is still open.
+    // Because the pool is frozen against window_end, Cy is an expert for the whole season
+    // and the days before they registered are filled like any other missing vote.
     const cy = addUser('Cy', '2026-08-29T00:00:00.000Z')
     const q2 = addQuestion(DAY_2_CLOSE)
     addVote(cy, q2, 'B')
-    resolve(q1, 'A')
+
+    // One run once everyone has registered — the mode the predictor cron is set up for.
     tickPredictor(app.db, silent, AFTER_DAY_2)
 
     const view = buildPredictorView(app.db)
-    expect(view.pool).toEqual(['Ada', 'Bob'])
-    expect(view.season.n_experts).toBe(2)
-    expect(view.rounds[1].n_voters).toBe(2) // Cy's vote is outside the pool
+    expect(view.pool).toEqual(['Ada', 'Bob', 'Cy'])
+    expect(view.season.n_experts).toBe(3)
+    expect(view.rounds[0].n_voters).toBe(3) // day 1 counts Cy, filled
+    expect(view.rounds[0].n_manual).toBe(1) // only Ada actually voted that day
+  })
+
+  it('locks the pool at the first tick — running it early excludes later registrations', () => {
+    addUser('Ada')
+    const q1 = addQuestion(DAY_1_CLOSE)
+    tickPredictor(app.db, silent, AFTER_DAY_1)
+
+    addUser('Cy', '2026-08-29T00:00:00.000Z')
+    addQuestion(DAY_2_CLOSE)
+    resolve(q1, 'A')
+    tickPredictor(app.db, silent, AFTER_DAY_2)
+
+    // The operational constraint this pins down: the predictor cron must stay paused
+    // until registrations are closed, because the first tick freezes the pool for good.
+    expect(buildPredictorView(app.db).pool).toEqual(['Ada'])
   })
 
   it('fills an absent expert with a reproducible coin flip', () => {
