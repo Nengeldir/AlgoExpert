@@ -3,6 +3,7 @@ import jwt from '@fastify/jwt'
 import cors from '@fastify/cors'
 import { initDb } from './db/migrate'
 import { registerAuth } from './plugins/authenticate'
+import { registerContentTypeParsers } from './plugins/contentType'
 import { authRoutes } from './routes/auth'
 import { meRoutes } from './routes/me'
 import { questionRoutes } from './routes/questions'
@@ -36,24 +37,8 @@ async function start() {
     secret: process.env.JWT_SECRET ?? 'change-me-in-production',
   })
 
-  // cron-job.org (and similar schedulers) send an unpredictable Content-Type
-  // (application/json, application/x-www-form-urlencoded, ...) with no body
-  // on parameter-less POST requests. Fastify rejects an empty JSON body and
-  // 415s on any content type it has no parser for, so fall back to treating
-  // an empty body as `{}` for any content type; only attempt to JSON-parse
-  // non-empty bodies.
-  app.addContentTypeParser('*', { parseAs: 'string' }, (_request, body, done) => {
-    const text = body as string
-    if (text.trim() === '') {
-      done(null, {})
-      return
-    }
-    try {
-      done(null, JSON.parse(text))
-    } catch (err) {
-      done(err as Error, undefined)
-    }
-  })
+  // Let a scheduler POST with an empty body under any Content-Type — see the plugin.
+  registerContentTypeParsers(app)
 
   // Register the authenticate decorator (adds app.authenticate and requireAdmin)
   await registerAuth(app)

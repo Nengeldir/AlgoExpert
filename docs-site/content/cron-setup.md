@@ -15,9 +15,9 @@ debugging. The cost is one more service to configure — this page.
 [cron-job.org](https://cron-job.org) is free and sufficient. Any scheduler that can send
 an authenticated POST works equally well.
 
-## The four jobs
+## The five jobs
 
-All four use **method `POST`** and the header:
+All five use **method `POST`** and the header:
 
 ```text
 Authorization: Bearer <your ADMIN_TOKEN>
@@ -25,6 +25,11 @@ Authorization: Bearer <your ADMIN_TOKEN>
 
 Use the production `ADMIN_TOKEN` from your Railway environment variables, not the dev
 default.
+
+**Leave the request body empty.** None of these endpoints take parameters. The backend
+accepts an empty body under any `Content-Type` — including `application/json`, which
+Fastify would otherwise reject outright — so you do not have to make the scheduler send
+`{}` to keep it happy.
 
 | Job | URL path | Schedule (UTC) | Meaning |
 |---|---|---|---|
@@ -82,7 +87,7 @@ so a successor can recreate them in ten minutes on their own account. See
    a broken job is invisible until a student asks why there was no question.
 8. **Save**, and make sure the job is **enabled**.
 
-Repeat for all four. Then verify — see [below](#verifying-the-jobs-work).
+Repeat for all five. Then verify — see [below](#verifying-the-jobs-work).
 
 ### Limits worth knowing
 

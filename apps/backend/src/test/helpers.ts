@@ -3,6 +3,7 @@ import jwt from '@fastify/jwt'
 import cors from '@fastify/cors'
 import { initDb } from '../db/migrate'
 import { registerAuth } from '../plugins/authenticate'
+import { registerContentTypeParsers } from '../plugins/contentType'
 import { authRoutes } from '../routes/auth'
 import { meRoutes } from '../routes/me'
 import { questionRoutes } from '../routes/questions'
@@ -22,6 +23,9 @@ export function buildTestApp() {
 
   void app.register(cors)
   void app.register(jwt, { secret: 'test-secret' })
+
+  // Must mirror index.ts, or the cron endpoints' body handling is untested.
+  registerContentTypeParsers(app)
   void registerAuth(app)
 
   app.get('/health', async () => ({ status: 'ok' }))
