@@ -1,12 +1,11 @@
-import crypto from 'crypto'
 import type { FastifyInstance } from 'fastify'
 import bcrypt from 'bcrypt'
 import type { UserRow, PasswordResetRow, JwtPayload } from '../types'
 import { sendPasswordResetEmail } from '../services/email'
+import { hashToken, issueResetToken, normalizeEmail } from '../services/passwordReset'
 
 const SALT_ROUNDS = 10
 const PSEUDONYM_RE = /^[a-zA-Z0-9_-]{3,30}$/
-const RESET_TOKEN_TTL_MS = 60 * 60 * 1000 // 1 hour
 
 interface RegisterBody {
   pseudonym: string
@@ -29,10 +28,6 @@ interface ResetPasswordBody {
   password: string
 }
 
-function hashToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex')
-}
-
 export async function authRoutes(app: FastifyInstance) {
   app.post<{ Body: RegisterBody }>('/register', {
     schema: {
@@ -48,7 +43,9 @@ export async function authRoutes(app: FastifyInstance) {
       },
     },
     handler: async (request, reply) => {
-      const { pseudonym, email, password, consent } = request.body
+      const { password, consent } = request.body
+      const pseudonym = request.body.pseudonym.trim()
+      const email = normalizeEmail(request.body.email)
 
       if (!consent) {
         return reply.status(400).send({ error: 'You must agree to the consent terms.' })
@@ -68,7 +65,9 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.status(409).send({ error: 'This pseudonym is already taken.' })
       }
 
-      const existingEmail = app.db.prepare('SELECT id FROM users WHERE email = ?').get(email)
+      const existingEmail = app.db
+        .prepare('SELECT id FROM users WHERE lower(email) = ?')
+        .get(email)
 
       if (existingEmail) {
         return reply.status(409).send({ error: 'This email is already registered.' })
@@ -101,9 +100,11 @@ export async function authRoutes(app: FastifyInstance) {
     handler: async (request, reply) => {
       const { identifier, password } = request.body
 
+      // Pseudonyms are matched exactly (they are displayed identity); emails are matched
+      // case-insensitively, so logging in with the address as typed always works.
       const user = app.db
-        .prepare('SELECT * FROM users WHERE pseudonym = ? OR email = ?')
-        .get(identifier, identifier) as UserRow | undefined
+        .prepare('SELECT * FROM users WHERE pseudonym = ? OR lower(email) = ?')
+        .get(identifier.trim(), normalizeEmail(identifier)) as UserRow | undefined
 
       if (!user) {
         return reply.status(401).send({ error: 'Invalid pseudonym/email or password.' })
@@ -132,26 +133,16 @@ export async function authRoutes(app: FastifyInstance) {
       },
     },
     handler: async (request, reply) => {
-      const { email } = request.body
+      const email = normalizeEmail(request.body.email)
       const genericMessage = 'If that email is registered, a reset link has been sent.'
 
-      const user = app.db.prepare('SELECT * FROM users WHERE email = ?').get(email) as
+      const user = app.db.prepare('SELECT * FROM users WHERE lower(email) = ?').get(email) as
         | UserRow
         | undefined
 
       if (user) {
-        const token = crypto.randomBytes(32).toString('hex')
-        const tokenHash = hashToken(token)
-        const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString()
-
-        app.db
-          .prepare('INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)')
-          .run(user.id, tokenHash, expiresAt)
-
-        const frontendOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173'
-        const resetUrl = `${frontendOrigin}/reset-password?token=${token}`
-
-        await sendPasswordResetEmail(user.email, resetUrl)
+        const { url } = issueResetToken(app.db, user.id)
+        await sendPasswordResetEmail(user.email, url)
       }
 
       return reply.send({ message: genericMessage })
@@ -173,12 +164,16 @@ export async function authRoutes(app: FastifyInstance) {
       const { token, password } = request.body
       const tokenHash = hashToken(token)
 
+      // expires_at is an ISO-8601 string, so it must be compared against another ISO
+      // string. SQLite compares TEXT lexicographically and ISO's 'T' sorts above the space
+      // in datetime('now'), which made an expired token look valid until the UTC date
+      // rolled over — and made a token minted late in the UTC day die at midnight.
       const reset = app.db
         .prepare(
           `SELECT * FROM password_resets
-           WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')`,
+           WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?`,
         )
-        .get(tokenHash) as PasswordResetRow | undefined
+        .get(tokenHash, new Date().toISOString()) as PasswordResetRow | undefined
 
       if (!reset) {
         return reply.status(400).send({ error: 'This reset link is invalid or has expired.' })
@@ -187,13 +182,12 @@ export async function authRoutes(app: FastifyInstance) {
       const password_hash = await bcrypt.hash(password, SALT_ROUNDS)
 
       const updateUser = app.db.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
-      const markUsed = app.db.prepare(
-        "UPDATE password_resets SET used_at = datetime('now') WHERE id = ?",
-      )
+      const markUsed = app.db.prepare('UPDATE password_resets SET used_at = ? WHERE id = ?')
+      const usedAt = new Date().toISOString()
 
       app.db.transaction(() => {
         updateUser.run(password_hash, reset.user_id)
-        markUsed.run(reset.id)
+        markUsed.run(usedAt, reset.id)
       })()
 
       return reply.send({ message: 'Your password has been reset.' })

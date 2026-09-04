@@ -175,6 +175,36 @@ curl -H "Authorization: Bearer dev-admin-token" \
 
 ---
 
+### Unblock a locked-out participant
+
+`POST /api/auth/forgot-password` returns the same generic success whether or not the
+address matched an account, so "I never got the mail" is ambiguous by design. These two
+routes resolve it. Search by a fragment of the pseudonym or the email:
+
+```bash
+curl -H "Authorization: Bearer dev-admin-token" \
+  "http://localhost:3000/admin/users?q=isk"
+```
+
+`last_reset_requested_at` in the response is the tell: recent means the request reached the
+backend and mail delivery is the suspect; null or old means their attempts never matched
+this row, so the address they are typing is not the one on file.
+
+Then mint a one-time link. It is returned whether or not the send succeeds, so you can
+forward it by hand when mail is the broken part; `{"send": true}` also puts it through the
+normal mail path and reports the provider's answer in `send_error`.
+
+```bash
+curl -X POST -H "Authorization: Bearer dev-admin-token" \
+  -H "Content-Type: application/json" -d '{"send": true}' \
+  http://localhost:3000/admin/users/42/reset-link
+```
+
+The link expires after an hour and works once — anyone holding it can set that account's
+password, so send it over a channel you trust.
+
+---
+
 ### List all questions
 
 **Windows (PowerShell)**

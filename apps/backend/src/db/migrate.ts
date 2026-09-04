@@ -1,6 +1,7 @@
 import BetterSqlite3 from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
+import { normalizeEmail } from '../services/passwordReset'
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -198,5 +199,59 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
   // Deferred until after the email column exists (fresh DBs get it via SCHEMA + ALTER above)
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)')
 
+  foldEmailsToCanonicalForm(db)
+
   return db
+}
+
+/**
+ * Fold stored emails to their canonical form (trimmed, lower-cased).
+ *
+ * Rows written before `normalizeEmail` existed can carry mixed case or stray whitespace.
+ * Every lookup that matters — login by email, password reset — compared them with SQLite's
+ * case-sensitive BINARY collation, so such a row was unreachable by the address its owner
+ * actually types. The route handlers now compare on `lower(email)`, which fixes reads; this
+ * fixes the stored data so the unique index means what it says.
+ *
+ * Rows that would collide with another account once folded are left untouched and logged:
+ * choosing which of two accounts keeps the address is an operator's decision, not a
+ * migration's, and a UNIQUE violation here would take the whole boot down.
+ */
+function foldEmailsToCanonicalForm(db: BetterSqlite3.Database): void {
+  const foldable = db
+    .prepare(
+      `SELECT id, email FROM users
+       WHERE email IS NOT NULL AND email <> lower(trim(email))`,
+    )
+    .all() as { id: number; email: string }[]
+
+  if (foldable.length === 0) return
+
+  const clashing = new Set(
+    (
+      db
+        .prepare(
+          `SELECT lower(trim(email)) AS folded FROM users
+           WHERE email IS NOT NULL
+           GROUP BY folded HAVING count(*) > 1`,
+        )
+        .all() as { folded: string }[]
+    ).map((r) => r.folded),
+  )
+
+  const update = db.prepare('UPDATE users SET email = ? WHERE id = ?')
+
+  db.transaction(() => {
+    for (const row of foldable) {
+      const folded = normalizeEmail(row.email)
+      if (clashing.has(folded)) {
+        console.warn(
+          `[migrate] user ${row.id} (${row.email}) folds onto another account's address — ` +
+            'left unchanged; merge the duplicates by hand',
+        )
+        continue
+      }
+      update.run(folded, row.id)
+    }
+  })()
 }

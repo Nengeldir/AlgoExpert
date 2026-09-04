@@ -1,7 +1,9 @@
 import type { FastifyInstance } from 'fastify'
 import { requireAdmin } from '../plugins/authenticate'
 import { dispatchNewQuestionEmails } from '../services/notifications'
-import type { QuestionRow } from '../types'
+import { sendPasswordResetEmail } from '../services/email'
+import { issueResetToken } from '../services/passwordReset'
+import type { QuestionRow, UserRow } from '../types'
 
 interface CreateQuestionBody {
   title: string
@@ -229,6 +231,99 @@ export async function adminRoutes(app: FastifyInstance) {
     },
   })
 
+  // --- Account recovery ---------------------------------------------------------------
+  //
+  // POST /api/auth/forgot-password deliberately reveals nothing — it returns the same
+  // generic success whether or not the address matched an account. That is correct for a
+  // public endpoint and useless for the operator fielding "I never got the mail", who
+  // cannot otherwise tell a mistyped address apart from a delivery failure. These two
+  // routes are that missing view, behind the admin token.
+
+  // Look a participant up by pseudonym or email substring.
+  app.get<{ Querystring: { q?: string } }>('/users', {
+    handler: async (request, reply) => {
+      const q = (request.query.q ?? '').trim().toLowerCase()
+
+      if (q.length < 2) {
+        return reply.status(400).send({ error: 'Search for at least 2 characters.' })
+      }
+
+      const like = `%${q}%`
+      const users = app.db
+        .prepare(
+          `SELECT u.id, u.pseudonym, u.email, u.email_notifications, u.created_at,
+                  COUNT(v.id) AS vote_count,
+                  (SELECT max(p.created_at) FROM password_resets p WHERE p.user_id = u.id)
+                    AS last_reset_requested_at
+           FROM users u
+           LEFT JOIN votes v ON v.user_id = u.id
+           WHERE lower(u.pseudonym) LIKE ? OR lower(u.email) LIKE ?
+           GROUP BY u.id
+           ORDER BY u.pseudonym ASC
+           LIMIT 25`,
+        )
+        .all(like, like) as AdminUserRow[]
+
+      return reply.send({ users })
+    },
+  })
+
+  // Mint a reset link for one participant.
+  //
+  // The link is always returned so it can be forwarded by hand — that is the path that
+  // works even when mail delivery is the thing that is broken. `send: true` additionally
+  // pushes it through the normal mail path and reports what the provider said, which is
+  // the quickest way to find out whether the address is deliverable at all.
+  app.post<{ Params: { id: string }; Body: { send?: boolean } | undefined }>(
+    '/users/:id/reset-link',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          properties: { send: { type: 'boolean' } },
+        },
+      },
+      handler: async (request, reply) => {
+        const userId = parseInt(request.params.id, 10)
+        if (!Number.isInteger(userId)) return reply.status(404).send({ error: 'User not found.' })
+
+        const user = app.db
+          .prepare('SELECT id, pseudonym, email FROM users WHERE id = ?')
+          .get(userId) as Pick<UserRow, 'id' | 'pseudonym' | 'email'> | undefined
+
+        if (!user) return reply.status(404).send({ error: 'User not found.' })
+
+        const { url, expires_at } = issueResetToken(app.db, user.id)
+
+        let sent = false
+        let send_error: string | undefined
+
+        if (request.body?.send) {
+          if (!user.email) {
+            send_error = 'This account has no email address on file.'
+          } else {
+            try {
+              await sendPasswordResetEmail(user.email, url)
+              sent = true
+            } catch (err) {
+              // Surfaced rather than thrown: the link above is still valid and forwardable,
+              // and the provider's message is the diagnostic the operator came for.
+              send_error = err instanceof Error ? err.message : String(err)
+            }
+          }
+        }
+
+        return reply.send({
+          user: { id: user.id, pseudonym: user.pseudonym, email: user.email },
+          reset_url: url,
+          expires_at,
+          sent,
+          ...(send_error ? { send_error } : {}),
+        })
+      },
+    },
+  )
+
   // List all questions (admin overview)
   app.get('/questions', {
     handler: async (_request, reply) => {
@@ -244,6 +339,16 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.send({ questions })
     },
   })
+}
+
+interface AdminUserRow {
+  id: number
+  pseudonym: string
+  email: string | null
+  email_notifications: 0 | 1
+  created_at: string
+  vote_count: number
+  last_reset_requested_at: string | null
 }
 
 interface QuestionVoteRow {

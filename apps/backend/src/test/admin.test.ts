@@ -82,3 +82,86 @@ describe('Admin endpoints', () => {
     expect(res.headers['content-type']).toContain('text/csv')
   })
 })
+
+describe('Admin account recovery', () => {
+  const app = buildTestApp()
+  setAdminToken(ADMIN_TOKEN)
+
+  const adminHeaders = { Authorization: `Bearer ${ADMIN_TOKEN}` }
+
+  beforeAll(async () => {
+    await app.ready()
+    await app.inject({
+      method: 'POST',
+      url: '/api/auth/register',
+      payload: {
+        pseudonym: 'lockedout',
+        email: 'Locked.Out@ethz.ch',
+        password: 'original-pw',
+        consent: true,
+      },
+    })
+  })
+  afterAll(() => app.close())
+
+  it('requires the admin token', async () => {
+    const res = await app.inject({ method: 'GET', url: '/admin/users?q=locked' })
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('rejects a search term that is too short to be a search', async () => {
+    const res = await app.inject({ method: 'GET', url: '/admin/users?q=l', headers: adminHeaders })
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('finds a user by a fragment of the pseudonym or the email', async () => {
+    for (const q of ['ckedo', 'LOCKED.OUT', 'ethz.ch']) {
+      const res = await app.inject({ method: 'GET', url: `/admin/users?q=${q}`, headers: adminHeaders })
+      expect(res.statusCode, q).toBe(200)
+      const { users } = res.json<{ users: { pseudonym: string; email: string }[] }>()
+      expect(users.map((u) => u.pseudonym), q).toContain('lockedout')
+    }
+  })
+
+  it('mints a working reset link without sending mail by default', async () => {
+    const res = await app.inject({ method: 'GET', url: '/admin/users?q=lockedout', headers: adminHeaders })
+    const { users } = res.json<{ users: { id: number }[] }>()
+
+    const minted = await app.inject({
+      method: 'POST',
+      url: `/admin/users/${users[0].id}/reset-link`,
+      headers: adminHeaders,
+      payload: {},
+    })
+    expect(minted.statusCode).toBe(200)
+
+    const body = minted.json<{ reset_url: string; sent: boolean; expires_at: string }>()
+    expect(body.sent).toBe(false)
+    expect(Date.parse(body.expires_at)).toBeGreaterThan(Date.now())
+
+    const token = new URL(body.reset_url).searchParams.get('token')!
+    const used = await app.inject({
+      method: 'POST',
+      url: '/api/auth/reset-password',
+      payload: { token, password: 'operator-issued-pw' },
+    })
+    expect(used.statusCode).toBe(200)
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { identifier: 'lockedout', password: 'operator-issued-pw' },
+    })
+    expect(login.statusCode).toBe(200)
+  })
+
+  it('404s for an unknown user', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/users/99999/reset-link',
+      headers: adminHeaders,
+      payload: {},
+    })
+    expect(res.statusCode).toBe(404)
+  })
+})

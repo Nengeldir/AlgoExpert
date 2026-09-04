@@ -111,6 +111,52 @@ matches an account. That is deliberate — it prevents anyone probing which emai
 registered — but it does mean "I got the confirmation" is not evidence the address was
 correct.
 
+### Unblocking one student by hand
+
+Because the public endpoint tells you nothing, use the admin routes to see the account and
+issue a link directly. First find them — the search matches a fragment of either the
+pseudonym or the email, case-insensitively:
+
+```bash
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+  "https://your-backend.up.railway.app/admin/users?q=isk"
+```
+
+```json
+{ "users": [ { "id": 42, "pseudonym": "canisk", "email": "can.iskender@ethz.ch",
+               "email_notifications": 1, "created_at": "2026-09-01 08:11:04",
+               "vote_count": 6, "last_reset_requested_at": "2026-09-03 19:22:41" } ] }
+```
+
+Read that response carefully before doing anything else:
+
+- **No row at all** — they never registered, or registered with a different address than
+  the one they are typing. They need to register, or to reset using the address that is
+  actually on file.
+- **A row, and `last_reset_requested_at` is recent** — the request *did* reach the backend
+  and a mail *was* attempted. The problem is delivery, not lookup: check the Resend
+  dashboard log for a bounce or a `403 validation_error` (see
+  [External services](external-services.html#verify-a-domain-this-is-not-optional-in-production)),
+  and have them check their spam folder.
+- **A row, but `last_reset_requested_at` is null or old** — their attempts never matched
+  this row. Confirm the address they are typing against the one shown.
+
+Then mint a link for them:
+
+```bash
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" -d '{"send": true}' \
+  https://your-backend.up.railway.app/admin/users/42/reset-link
+```
+
+The link is returned whether or not the mail goes out, so you can forward it by hand when
+delivery is the broken part. `"send": true` also pushes it through the normal mail path and
+reports the provider's answer in `send_error` — which is the fastest way to find out
+whether that address is deliverable at all. Omit the body to mint a link without sending.
+
+The link expires after **one hour** and works once, so send it to the student promptly, and
+over a channel you trust — anyone holding it can set that account's password.
+
 ## Nobody was emailed about today's question
 
 Work down this list — the causes are ordered by how often they are the answer.
