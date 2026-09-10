@@ -43,13 +43,16 @@ The same weights give a randomized learner and a deterministic one, and they do
 | Follow *i* | fractional (the weight on the wrong answer) | Hedge: `L_A ≤ L_best + ln(N)/η + ηT/8` |
 | Weighted Majority | 0 or 1 per round | `M_A ≤ (η·M_best + ln N) / ln(2/(1+β))`, i.e. `2.41(M_best + log₂N)` at `β = ½` |
 
-### Simultaneous questions are one round, not two
+### SMI and YouTube are two experiments, not one
 
-SMI and YouTube questions close at the same instant. Updating the weights after
-the first before predicting the second would use a truth that is not revealed
-until hours later — the prediction assumption breaks and neither bound applies.
-The live predictor therefore predicts every question sharing a deadline from one
-weight vector and applies their losses together.
+Predicting the stock index and predicting a video race are unrelated skills, so
+they are run as two separate expert problems: the live predictor keeps one
+frozen pool, one weight vector, one learning rate and one round count per
+series, and the lecture analysis splits the export the same way
+(`analysis/split_series.py`, then `run.py` per file). A student's record on the
+SMI never sets their weight on YouTube. Within one series, questions that
+happen to share a deadline are still predicted from one weight vector and
+scored together, since neither truth is known when the other is predicted.
 
 ## How it works
 

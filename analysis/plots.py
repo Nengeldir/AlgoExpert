@@ -185,17 +185,31 @@ def _label_line_ends(ax, theme: Theme, items, min_gap: float = 0.045, markers: b
         for p in placed:
             p[0] -= overflow
 
-    for fy, fx, text, _color, _y in placed:
+    for fy, fx, text, color, y in placed:
+        # a label pushed away from its line gets a thin leader back to the dot,
+        # and every label takes its series colour so it can be told apart even
+        # when several lines end at the same value
+        fy_true = to_axes.transform(ax.transData.transform((0, y)))[1]
+        if abs(fy - fy_true) > 1e-3:
+            ax.annotate(
+                "",
+                xy=(fx, fy_true),
+                xycoords="axes fraction",
+                xytext=(fx + 0.012, fy),
+                textcoords="axes fraction",
+                arrowprops=dict(arrowstyle="-", color=color, linewidth=0.8, alpha=0.8),
+                annotation_clip=False,
+            )
         ax.annotate(
             text,
             xy=(fx, fy),
             xycoords="axes fraction",
-            xytext=(7, 0),
+            xytext=(9, 0),
             textcoords="offset points",
-            color=theme.ink_secondary,
+            color=color,
             fontsize=9,
             va="center",
-            fontweight="500",
+            fontweight="600",
             annotation_clip=False,
         )
 
@@ -238,7 +252,7 @@ def plot_daily_rates(run: Run, out: Path, theme: Theme = LIGHT) -> Path:
         ax,
         theme,
         "Chance of being right on each question",
-        f'"Follow i" with growth rate G = {run.growth_rate:.0%}',
+        f'weighted majority (expected) with growth rate G = {run.growth_rate:.0%}',
     )
     return _save(fig, out, theme)
 
@@ -264,16 +278,21 @@ def plot_cumulative_rates(run: Run, out: Path, theme: Theme = LIGHT) -> Path:
     # "Best expert in hindsight" is a single number known only at the end, so
     # it is drawn as a flat line -- that is exactly the comparator the slides
     # use, and drawing it as a running curve would imply it was knowable early.
+    # Names follow the lecture slides: the randomized learner is "the weighted
+    # majority" there (its rate is an expectation), the deterministic A/B vote
+    # is what the app committed each day. Plain majority is dashed so it stays
+    # visible when it coincides with the committed A/B line, which is common.
     series = [
-        ("Best expert (hindsight)", [run.best_expert_rate] * n, theme.series[3]),
-        ('"Follow i"', follow, theme.series[0]),
-        ("Weighted majority", wmaj, theme.series[2]),
-        ("Plain majority", umaj, theme.series[1]),
+        ("Best expert (hindsight)", [run.best_expert_rate] * n, theme.series[3], "-"),
+        ("Weighted majority (expected)", follow, theme.series[0], "-"),
+        ("Weighted majority (vote)", wmaj, theme.series[2], "-"),
+        ("Plain majority", umaj, theme.series[1], (0, (4, 3))),
     ]
 
     label_items = []
-    for label, ys, color in series:
-        ax.plot(xs, ys, color=color, linewidth=LINE_W, solid_capstyle="round", zorder=3)
+    for label, ys, color, ls in series:
+        ax.plot(xs, ys, color=color, linewidth=LINE_W, solid_capstyle="round", zorder=3,
+                linestyle=ls)
         label_items.append((xs[-1], ys[-1], f"{label}  {ys[-1]:.0%}", color))
 
     ax.axhline(0.5, color=theme.ink_muted, linewidth=1.2, linestyle=(0, (5, 4)), zorder=2)
@@ -300,11 +319,11 @@ def plot_cumulative_rates(run: Run, out: Path, theme: Theme = LIGHT) -> Path:
     ax.set_ylim(0, 1)
     ax.set_xlim(1, n * 1.02)
     ax.yaxis.set_major_formatter(PercentFormatter(1.0))
-    _label_line_ends(ax, theme, label_items)
+    _label_line_ends(ax, theme, label_items, min_gap=0.06)
     ax.legend(
         handles=[
-            plt.Line2D([], [], color=c, linewidth=LINE_W, label=lab)
-            for lab, _, c in series
+            plt.Line2D([], [], color=c, linewidth=LINE_W, label=lab, linestyle=ls)
+            for lab, _, c, ls in series
         ],
         loc="lower left",
         frameon=False,

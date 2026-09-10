@@ -30,20 +30,37 @@ import {
  * ends at midnight, so ending a day early leaves Friday free to run the predictor and
  * build the slides without racing the deadline.
  *
- * T = 20 questions: SMI runs weekdays only (9 of the 11 days), YouTube runs daily (11).
- * It is a *planned* horizon — the anytime learning rate does not depend on it, so a
- * YouTube pair you decide not to approve costs nothing but a slightly stale progress
- * counter in the view.
+ * SMI and YouTube are two separate prediction problems, so they are two separate
+ * predictors ("series"): each has its own frozen season row, its own expert pool, its own
+ * weight vector and its own round count. Mixing them into one run would let a student's
+ * stock-market record set their weight on a video race, which the lecture never claims.
+ *
+ * Planned horizons: SMI runs weekdays only (9 of the 11 days), YouTube runs daily (11).
+ * They are *planned* — the anytime learning rate does not depend on them, so a YouTube
+ * pair you decide not to approve costs nothing but a slightly stale progress counter.
  */
+export type Series = 'smi' | 'youtube'
+export const SERIES: readonly Series[] = ['smi', 'youtube']
+
+export function parseSeries(value: unknown): Series | null {
+  return value === 'smi' || value === 'youtube' ? value : null
+}
+
+/** How each series recognises its questions — by the linking table the source job writes. */
+const SERIES_SOURCE_FILTER: Record<Series, string> = {
+  smi: 's.question_id IS NOT NULL',
+  youtube: 'y.question_id IS NOT NULL',
+}
+
 const DEFAULT_SEASON_START = '2026-08-31'
 const DEFAULT_SEASON_END = '2026-09-10'
-const DEFAULT_T_PLANNED = 20
+const DEFAULT_T_PLANNED: Record<Series, number> = { smi: 9, youtube: 11 }
 const DEFAULT_FILL_SEED = 20260831
 /** Cohort size assumed only to seed the stored fallback rate before the pool is frozen. */
 const ASSUMED_N = 30
 
 export interface SeasonRow {
-  id: number
+  series: Series
   window_start: string
   window_end: string
   t_planned: number
@@ -58,6 +75,7 @@ export interface SeasonRow {
 
 interface PredictorRoundRow {
   id: number
+  series: Series
   question_id: number
   batch_key: string
   round_index: number
@@ -87,8 +105,14 @@ interface EligibleQuestionRow {
 }
 
 export interface TickOutcome {
-  committed: { question_id: number; round_index: number; prediction: Choice }[]
-  scored: { question_id: number; round_index: number; truth: Choice; wm_correct: boolean }[]
+  committed: { series: Series; question_id: number; round_index: number; prediction: Choice }[]
+  scored: {
+    series: Series
+    question_id: number
+    round_index: number
+    truth: Choice
+    wm_correct: boolean
+  }[]
 }
 
 /**
@@ -111,24 +135,31 @@ function parseTimestamp(value: string): number {
  * operator who forgets to POST it would otherwise silently get a season whose parameters
  * were first written after data existed.
  */
-export function ensureSeason(db: BetterSqlite3.Database): SeasonRow {
-  const existing = db.prepare('SELECT * FROM predictor_season WHERE id = 1').get() as
+export function ensureSeason(db: BetterSqlite3.Database, series: Series): SeasonRow {
+  const existing = db.prepare('SELECT * FROM predictor_season WHERE series = ?').get(series) as
     | SeasonRow
     | undefined
   if (existing) return existing
 
   const startDate = process.env.PREDICTOR_SEASON_START ?? DEFAULT_SEASON_START
   const endDate = process.env.PREDICTOR_SEASON_END ?? DEFAULT_SEASON_END
-  const tPlanned = parseInt(process.env.PREDICTOR_T_PLANNED ?? String(DEFAULT_T_PLANNED), 10)
+  // PREDICTOR_T_PLANNED_SMI / _YOUTUBE override one series; PREDICTOR_T_PLANNED both.
+  const tPlanned = parseInt(
+    process.env[`PREDICTOR_T_PLANNED_${series.toUpperCase()}`] ??
+      process.env.PREDICTOR_T_PLANNED ??
+      String(DEFAULT_T_PLANNED[series]),
+    10,
+  )
   const fillSeed = parseInt(process.env.PREDICTOR_FILL_SEED ?? String(DEFAULT_FILL_SEED), 10)
   const rateMode = process.env.PREDICTOR_RATE_MODE === 'fixed' ? 'fixed' : 'anytime'
 
   db.prepare(
     `INSERT INTO predictor_season
-       (id, window_start, window_end, t_planned, rate_mode, learning_rate, tie_break,
+       (series, window_start, window_end, t_planned, rate_mode, learning_rate, tie_break,
         fill_seed, n_experts, expert_pool_json, created_at)
-     VALUES (1, ?, ?, ?, ?, ?, 'A', ?, NULL, NULL, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, 'A', ?, NULL, NULL, ?)`,
   ).run(
+    series,
     zurichTimeUTC(startDate, PUBLISH_HOUR),
     zurichTimeUTC(endDate, RACE_END_HOUR),
     tPlanned,
@@ -138,16 +169,18 @@ export function ensureSeason(db: BetterSqlite3.Database): SeasonRow {
     new Date().toISOString(),
   )
 
-  return db.prepare('SELECT * FROM predictor_season WHERE id = 1').get() as SeasonRow
+  return db.prepare('SELECT * FROM predictor_season WHERE series = ?').get(series) as SeasonRow
 }
 
 export function seasonPool(season: SeasonRow): string[] {
   return season.expert_pool_json ? (JSON.parse(season.expert_pool_json) as string[]) : []
 }
 
-/** True once anything has been committed — after which the config must not change. */
-export function seasonIsLocked(db: BetterSqlite3.Database): boolean {
-  const row = db.prepare('SELECT COUNT(*) AS n FROM predictor_rounds').get() as { n: number }
+/** True once anything has been committed for the series — after which its config must not change. */
+export function seasonIsLocked(db: BetterSqlite3.Database, series: Series): boolean {
+  const row = db
+    .prepare('SELECT COUNT(*) AS n FROM predictor_rounds WHERE series = ?')
+    .get(series) as { n: number }
   return row.n > 0
 }
 
@@ -164,15 +197,15 @@ export function seasonIsLocked(db: BetterSqlite3.Database): boolean {
  * weights they were committed with; the ledger is never rewritten, because a prediction
  * that silently improves after the fact is exactly what the guarantee rules out.
  */
-export function replayWeights(db: BetterSqlite3.Database, pool: string[]): Weights {
+export function replayWeights(db: BetterSqlite3.Database, pool: string[], series: Series): Weights {
   const rows = db
     .prepare(
       `SELECT batch_key, round_index, learning_rate, votes_json, truth
        FROM   predictor_rounds
-       WHERE  scored_at IS NOT NULL
+       WHERE  series = ? AND scored_at IS NOT NULL
        ORDER BY round_index ASC`,
     )
-    .all() as Pick<
+    .all(series) as Pick<
     PredictorRoundRow,
     'batch_key' | 'round_index' | 'learning_rate' | 'votes_json' | 'truth'
   >[]
@@ -221,12 +254,16 @@ export function tickPredictor(
   log: (msg: string) => void = console.log,
   now: Date = new Date(),
 ): TickOutcome {
-  const season = ensureSeason(db)
   const nowIso = now.toISOString()
   const outcome: TickOutcome = { committed: [], scored: [] }
 
-  commitDueBatches(db, season, nowIso, outcome, log)
-  scoreResolvedBatches(db, outcome, log)
+  // Each series is a self-contained run: its own season row, pool and ledger. The loop
+  // is the only place the two meet, and only so one cron job drives both.
+  for (const series of SERIES) {
+    const season = ensureSeason(db, series)
+    commitDueBatches(db, season, nowIso, outcome, log)
+    scoreResolvedBatches(db, series, outcome, log)
+  }
 
   if (outcome.committed.length === 0 && outcome.scored.length === 0) {
     log('[predictor] nothing to commit or score')
@@ -241,6 +278,8 @@ function commitDueBatches(
   outcome: TickOutcome,
   log: (msg: string) => void,
 ): void {
+  // Only this series' questions; manual one-off questions belong to neither series and
+  // are never predicted.
   const due = db
     .prepare(
       `SELECT q.id, q.title, q.deadline, q.ground_truth,
@@ -252,6 +291,7 @@ function commitDueBatches(
        LEFT JOIN youtube_suggestions y ON y.question_id = q.id
        LEFT JOIN predictor_rounds    p ON p.question_id = q.id
        WHERE  p.id IS NULL
+         AND  ${SERIES_SOURCE_FILTER[season.series]}
          AND  q.deadline <= ?
          AND  q.deadline >= ?
          AND  q.deadline <= ?
@@ -281,16 +321,16 @@ function commitDueBatches(
         continue
       }
       db.prepare(
-        'UPDATE predictor_season SET n_experts = ?, expert_pool_json = ? WHERE id = 1',
-      ).run(pool.length, JSON.stringify(pool))
-      log(`[predictor] expert pool frozen at ${pool.length} expert(s)`)
+        'UPDATE predictor_season SET n_experts = ?, expert_pool_json = ? WHERE series = ?',
+      ).run(pool.length, JSON.stringify(pool), season.series)
+      log(`[predictor] ${season.series}: expert pool frozen at ${pool.length} expert(s)`)
     }
 
-    const weights = replayWeights(db, pool)
+    const weights = replayWeights(db, pool, season.series)
     const maxIndex = (
-      db.prepare('SELECT COALESCE(MAX(round_index), 0) AS m FROM predictor_rounds').get() as {
-        m: number
-      }
+      db
+        .prepare('SELECT COALESCE(MAX(round_index), 0) AS m FROM predictor_rounds WHERE series = ?')
+        .get(season.series) as { m: number }
     ).m
     // The rate is pinned to the last round in the batch so `t` counts questions, matching
     // the horizon T the bounds are quoted against.
@@ -305,9 +345,10 @@ function commitDueBatches(
 
     const insert = db.prepare(
       `INSERT INTO predictor_rounds
-         (question_id, batch_key, round_index, committed_at, learning_rate, weights_json,
-          votes_json, weight_a, weight_b, n_voters, n_manual, wm_prediction, mv_prediction)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (series, question_id, batch_key, round_index, committed_at, learning_rate,
+          weights_json, votes_json, weight_a, weight_b, n_voters, n_manual, wm_prediction,
+          mv_prediction)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
 
     db.transaction(() => {
@@ -330,6 +371,7 @@ function commitDueBatches(
         const roundIndex = maxIndex + offset + 1
 
         insert.run(
+          season.series,
           question.id,
           question.deadline,
           roundIndex,
@@ -346,12 +388,13 @@ function commitDueBatches(
         )
 
         outcome.committed.push({
+          series: season.series,
           question_id: question.id,
           round_index: roundIndex,
           prediction: prediction.weightedMajority,
         })
         log(
-          `[predictor] round ${roundIndex} committed for question ${question.id}: ` +
+          `[predictor] ${season.series} round ${roundIndex} committed for question ${question.id}: ` +
             `WM=${prediction.weightedMajority} (${(prediction.weightA * 100).toFixed(1)}% on A), ` +
             `${prediction.nManual}/${prediction.nVoters} real votes`,
         )
@@ -362,6 +405,7 @@ function commitDueBatches(
 
 function scoreResolvedBatches(
   db: BetterSqlite3.Database,
+  series: Series,
   outcome: TickOutcome,
   log: (msg: string) => void,
 ): void {
@@ -370,10 +414,10 @@ function scoreResolvedBatches(
       `SELECT p.*, q.ground_truth AS question_truth
        FROM   predictor_rounds p
        JOIN   questions q ON q.id = p.question_id
-       WHERE  p.scored_at IS NULL
+       WHERE  p.series = ? AND p.scored_at IS NULL
        ORDER BY p.round_index ASC`,
     )
-    .all() as (PredictorRoundRow & { question_truth: Choice | null })[]
+    .all(series) as (PredictorRoundRow & { question_truth: Choice | null })[]
 
   if (pending.length === 0) return
 
@@ -408,13 +452,14 @@ function scoreResolvedBatches(
         )
 
         outcome.scored.push({
+          series,
           question_id: row.question_id,
           round_index: row.round_index,
           truth,
           wm_correct: wmCorrect,
         })
         log(
-          `[predictor] round ${row.round_index} scored: truth=${truth}, ` +
+          `[predictor] ${series} round ${row.round_index} scored: truth=${truth}, ` +
             `WM ${wmCorrect ? 'correct' : 'wrong'}`,
         )
       }
@@ -493,6 +538,7 @@ export interface PredictorExpertView {
 
 export interface PredictorView {
   season: {
+    series: Series
     window_start: string
     window_end: string
     t_planned: number
@@ -544,8 +590,8 @@ export interface PredictorView {
   }
 }
 
-export function buildPredictorView(db: BetterSqlite3.Database): PredictorView {
-  const season = ensureSeason(db)
+export function buildPredictorView(db: BetterSqlite3.Database, which: Series): PredictorView {
+  const season = ensureSeason(db, which)
   const pool = seasonPool(season)
 
   const rounds = db
@@ -562,9 +608,10 @@ export function buildPredictorView(db: BetterSqlite3.Database): PredictorView {
        JOIN   questions q ON q.id = p.question_id
        LEFT JOIN smi_questions       s ON s.question_id = q.id
        LEFT JOIN youtube_suggestions y ON y.question_id = q.id
+       WHERE  p.series = ?
        ORDER BY p.round_index ASC`,
     )
-    .all() as (PredictorRoundView & { weights_json: string; votes_json: string })[]
+    .all(which) as (PredictorRoundView & { weights_json: string; votes_json: string })[]
 
   const scored = rounds.filter((r) => r.scored_at !== null && r.truth !== null)
   const nScored = scored.length
@@ -607,7 +654,7 @@ export function buildPredictorView(db: BetterSqlite3.Database): PredictorView {
     })
   })
 
-  const finalWeights = replayWeights(db, pool)
+  const finalWeights = replayWeights(db, pool, which)
   const experts: PredictorExpertView[] = pool
     .map((pseudonym) => ({
       pseudonym,
@@ -653,6 +700,7 @@ export function buildPredictorView(db: BetterSqlite3.Database): PredictorView {
 
   return {
     season: {
+      series: season.series,
       window_start: season.window_start,
       window_end: season.window_end,
       t_planned: season.t_planned,

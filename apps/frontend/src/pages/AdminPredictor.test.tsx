@@ -41,6 +41,7 @@ function round(overrides: Partial<client.PredictorRound> = {}): client.Predictor
 function view(overrides: Partial<client.PredictorView> = {}): client.PredictorView {
   return {
     season: {
+      series: 'smi',
       window_start: '2026-08-28T06:00:00.000Z',
       window_end: '2026-09-11T22:00:00.000Z',
       t_planned: 26,
@@ -231,6 +232,16 @@ describe('AdminPredictor', () => {
     // Heatmap row headers use the same names, so scope the check to the table.
     const table = screen.getByText('Final weight').closest('table')!
     expect(within(table).getByText('Ada')).toBeInTheDocument()
+  })
+
+  it('switches between the SMI and YouTube predictors', async () => {
+    vi.mocked(client.adminApi.getPredictor).mockResolvedValue(view())
+    renderPage()
+
+    await waitFor(() => expect(client.adminApi.getPredictor).toHaveBeenCalledWith('smi'))
+    await userEvent.click(screen.getByRole('tab', { name: 'YouTube' }))
+    await waitFor(() => expect(client.adminApi.getPredictor).toHaveBeenCalledWith('youtube'))
+    expect(screen.getByRole('tab', { name: 'YouTube' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('surfaces a load failure', async () => {

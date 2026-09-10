@@ -132,7 +132,7 @@ def build_summary(run, report, sim, args) -> str:
     add = L.append
 
     add("=" * 66)
-    add("  EXPERT ALGORITHM  --  'Follow i'")
+    add("  EXPERT ALGORITHM  --  weighted majority")
     add("=" * 66)
     add("")
     add(f"  questions (D)        {run.n_rounds}")
@@ -150,9 +150,9 @@ def build_summary(run, report, sim, args) -> str:
     add("  SUCCESS RATES")
     add("-" * 66)
     add("")
-    add(f"  \"Follow i\"           {run.follow_i_rate:>7.1%}   <- the algorithm")
+    add(f"  weighted maj. (expected) {run.follow_i_rate:>7.1%}   <- the algorithm")
     add(f"  best expert          {run.best_expert_rate:>7.1%}   (in hindsight, correct/D)")
-    add(f"  weighted majority    {run.weighted_majority_rate:>7.1%}")
+    add(f"  weighted maj. (vote)     {run.weighted_majority_rate:>7.1%}")
     add(f"  plain majority       {run.unweighted_majority_rate:>7.1%}")
     add(f"  average expert       {run.mean_expert_rate:>7.1%}")
     add(f"  median expert        {run.median_expert_rate:>7.1%}")

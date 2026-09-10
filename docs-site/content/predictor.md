@@ -10,6 +10,15 @@ students it is built from.
 It is admin-only and deliberately so — the weights are the reveal material for the lecture,
 and showing them to participants mid-window would let them herd.
 
+## Two predictors: SMI and YouTube
+
+Guessing the stock index and guessing a video race are different skills, so the page runs
+**one predictor per question series**. The SMI / YouTube switch at the top of the page
+flips between them; each has its own expert pool, its own weights, its own round count and
+its own guarantee check, and nothing a student does on one series affects their weight on
+the other. One-off manual questions belong to neither and are never predicted. The tick
+drives both series in one call.
+
 ## What you have to do
 
 **Set up one cron job**, then nothing. See [Cron setup](cron-setup.html).
@@ -34,9 +43,9 @@ The predictor only looks at questions whose voting closes between **28 August an
 September 2026**. Anything outside that is ignored entirely, so leftover test questions from
 before the semester cannot contaminate the run.
 
-Planned horizon is **26 questions** — SMI on the 11 weekdays, YouTube on all 15 days. Nothing
-breaks if the real number differs; the count on the page just reads "N rounds scored of 26
-planned".
+Planned horizons are **9 SMI questions** (trading days) and **11 YouTube questions** (every
+day). Nothing breaks if the real number differs; the count on the page just reads "N rounds
+scored of 9 planned" for the series you are looking at.
 
 To change the window, set `PREDICTOR_SEASON_START` and `PREDICTOR_SEASON_END` (both
 `YYYY-MM-DD`) before the first prediction is committed. See [Semester

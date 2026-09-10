@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react'
-import { adminApi, ApiError, type PredictorView, type PredictorRound } from '../api/client'
+import {
+  adminApi,
+  ApiError,
+  PREDICTOR_SERIES,
+  type PredictorSeries,
+  type PredictorView,
+  type PredictorRound,
+} from '../api/client'
+
 import { AccuracyChart, WeightHeatmap, BoundMeter } from '../components/PredictorCharts'
+
+const SERIES_LABEL: Record<PredictorSeries, string> = { smi: 'SMI', youtube: 'YouTube' }
 
 const pct = (v: number) => `${(v * 100).toFixed(0)}%`
 
@@ -38,11 +48,12 @@ export default function AdminPredictor() {
   const [ticking, setTicking] = useState(false)
   const [tickLog, setTickLog] = useState<string[]>([])
   const [showExperts, setShowExperts] = useState(false)
+  const [activeSeries, setActiveSeries] = useState<PredictorSeries>('smi')
 
-  async function load() {
+  async function load(which: PredictorSeries = activeSeries) {
     setError('')
     try {
-      setView(await adminApi.getPredictor())
+      setView(await adminApi.getPredictor(which))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Failed to load the predictor.')
     } finally {
@@ -51,8 +62,9 @@ export default function AdminPredictor() {
   }
 
   useEffect(() => {
-    load()
-  }, [])
+    load(activeSeries)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSeries])
 
   async function handleTick() {
     setTicking(true)
@@ -87,12 +99,27 @@ export default function AdminPredictor() {
       <header className="page-header">
         <h1 className="page-title">Expert Algorithm — live predictor</h1>
         <p className="page-subtitle">
-          The Weighted Majority learner runs on every question the moment voting closes, commits an
-          A/B prediction from the class's votes, and is scored when the ground truth arrives.
+          One Weighted Majority learner per question series. It runs on every question the moment
+          voting closes, commits an A/B prediction from the class's votes, and is scored when the
+          ground truth arrives. SMI and YouTube are separate runs with separate weights.
         </p>
       </header>
 
       <div className="admin-toolbar">
+        <div className="predictor-series" role="tablist" aria-label="Question series">
+          {PREDICTOR_SERIES.map((s) => (
+            <button
+              key={s}
+              role="tab"
+              aria-selected={activeSeries === s}
+              className={`btn btn--sm ${activeSeries === s ? '' : 'btn--outline'}`}
+              onClick={() => setActiveSeries(s)}
+              disabled={ticking}
+            >
+              {SERIES_LABEL[s]}
+            </button>
+          ))}
+        </div>
         <div className="predictor-config">
           <span className="config-chip">
             window{' '}
@@ -137,14 +164,18 @@ export default function AdminPredictor() {
       {!started && (
         <div className="card empty-state">
           <p>
-            The predictor has not committed anything yet. It starts on the first question whose
-            voting closes inside the window above, and freezes the expert pool at that moment.
+            The {SERIES_LABEL[activeSeries]} predictor has not committed anything yet. It starts on
+            the first {SERIES_LABEL[activeSeries]} question whose voting closes inside the window
+            above, and freezes its expert pool at that moment.
           </p>
           <p className="empty-state__detail">
-            Planned horizon: <strong>{season.t_planned} questions</strong> — SMI on weekdays,
-            YouTube daily. Absent students are filled with a seeded coin flip (seed{' '}
-            {season.fill_seed}), so a missing vote never removes anyone from the run and the fill is
-            identical on every replay.
+            Planned horizon:{' '}
+            <strong>
+              {season.t_planned} {SERIES_LABEL[activeSeries]} questions
+            </strong>
+            . Absent students are filled with a seeded coin flip (seed {season.fill_seed}), so a
+            missing vote never removes anyone from the run and the fill is identical on every
+            replay.
           </p>
         </div>
       )}

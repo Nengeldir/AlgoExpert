@@ -75,14 +75,30 @@ CREATE TABLE IF NOT EXISTS youtube_suggestions (
   created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
--- The predictor's frozen configuration. Exactly one row (id = 1).
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    INTEGER NOT NULL REFERENCES users(id),
+  endpoint   TEXT    NOT NULL UNIQUE,
+  p256dh     TEXT    NOT NULL,
+  auth       TEXT    NOT NULL,
+  created_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+`
+
+/** The predictor tables, kept apart from SCHEMA so the one-time rebuild below can re-run them. */
+const PREDICTOR_SCHEMA = `
+-- The predictor's frozen configuration. One row per question series ('smi', 'youtube').
 --
--- Written before the first round is committed and then effectively immutable: the
--- learning rate, the expert pool and the fill seed all have to be fixed *ahead of the
--- data* or the regret bound does not apply. Storing them makes that auditable rather
--- than a claim.
+-- SMI and YouTube are separate prediction problems: each series runs its own expert
+-- pool, weight vector, learning rate and round count, exactly as the lecture analysis
+-- splits them. Written before the first round of that series is committed and then
+-- effectively immutable: the learning rate, the expert pool and the fill seed all have to
+-- be fixed *ahead of the data* or the regret bound does not apply. Storing them makes
+-- that auditable rather than a claim.
 CREATE TABLE IF NOT EXISTS predictor_season (
-  id              INTEGER PRIMARY KEY CHECK(id = 1),
+  series          TEXT    PRIMARY KEY CHECK(series IN ('smi', 'youtube')),
   window_start    TEXT    NOT NULL,
   window_end      TEXT    NOT NULL,
   t_planned       INTEGER NOT NULL,
@@ -102,13 +118,15 @@ CREATE TABLE IF NOT EXISTS predictor_season (
 --
 -- weights_json is the weight vector the predictor held when it committed, and is never
 -- recomputed afterwards — replaying it later with hindsight is precisely the thing the
--- no-cheating precondition forbids. Questions that share a batch_key (their deadline)
--- were predicted simultaneously and therefore share one weight vector: their truths are
--- not revealed until both have closed, so neither may inform the other.
+-- no-cheating precondition forbids. Within a series, questions that share a batch_key
+-- (their deadline) are predicted simultaneously from one weight vector and scored
+-- together; across series nothing is shared.
 CREATE TABLE IF NOT EXISTS predictor_rounds (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  series        TEXT    NOT NULL CHECK(series IN ('smi', 'youtube')),
   question_id   INTEGER NOT NULL UNIQUE REFERENCES questions(id),
   batch_key     TEXT    NOT NULL,
+  -- counts rounds within the series: SMI round 3 and YouTube round 3 are unrelated
   round_index   INTEGER NOT NULL,
   committed_at  TEXT    NOT NULL,
   learning_rate REAL    NOT NULL,
@@ -128,18 +146,7 @@ CREATE TABLE IF NOT EXISTS predictor_rounds (
 );
 
 CREATE INDEX IF NOT EXISTS idx_predictor_rounds_batch ON predictor_rounds(batch_key);
-CREATE INDEX IF NOT EXISTS idx_predictor_rounds_order ON predictor_rounds(round_index);
-
-CREATE TABLE IF NOT EXISTS push_subscriptions (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id    INTEGER NOT NULL REFERENCES users(id),
-  endpoint   TEXT    NOT NULL UNIQUE,
-  p256dh     TEXT    NOT NULL,
-  auth       TEXT    NOT NULL,
-  created_at TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_predictor_rounds_order ON predictor_rounds(series, round_index);
 `
 
 export function initDb(dbPath: string): BetterSqlite3.Database {
@@ -155,6 +162,8 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
   db.pragma('foreign_keys = ON')
 
   db.exec(SCHEMA)
+  rebuildPredictorTablesForSeries(db)
+  db.exec(PREDICTOR_SCHEMA)
 
   // Additive column migrations — safe to run on every start
   const alterations = [
@@ -202,6 +211,31 @@ export function initDb(dbPath: string): BetterSqlite3.Database {
   foldEmailsToCanonicalForm(db)
 
   return db
+}
+
+/**
+ * Rebuild the predictor tables when they still have the single-series shape.
+ *
+ * The first design ran one predictor over SMI and YouTube questions interleaved, which
+ * mixes two unrelated prediction problems into one weight vector. The per-series shape is
+ * keyed by `series` and has no migration path for the old rows: a ledger row is only
+ * meaningful together with the weights it was committed from, and those belonged to the
+ * combined run. So the old tables are dropped and the next tick recommits every closed
+ * question from the votes, which are the source of truth. Detected by the missing
+ * `series` column, so it runs exactly once; fresh databases never enter it.
+ */
+function rebuildPredictorTablesForSeries(db: BetterSqlite3.Database): void {
+  const columns = db.prepare('PRAGMA table_info(predictor_season)').all() as { name: string }[]
+  if (columns.length === 0 || columns.some((c) => c.name === 'series')) return
+
+  const rows = (db.prepare('SELECT COUNT(*) AS n FROM predictor_rounds').get() as { n: number }).n
+  db.exec('DROP TABLE IF EXISTS predictor_rounds')
+  db.exec('DROP TABLE IF EXISTS predictor_season')
+  console.warn(
+    `[migrate] predictor tables rebuilt for per-series predictors; ${rows} ledger row(s) ` +
+      'from the single-series run were discarded. POST /admin/predictor/tick recommits ' +
+      'every closed question from the votes.',
+  )
 }
 
 /**

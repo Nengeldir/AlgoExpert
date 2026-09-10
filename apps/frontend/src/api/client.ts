@@ -247,8 +247,13 @@ export interface PredictorExpert {
   final_weight_share: number
 }
 
+/** SMI and YouTube are separate predictors with separate ledgers. */
+export type PredictorSeries = 'smi' | 'youtube'
+export const PREDICTOR_SERIES: readonly PredictorSeries[] = ['smi', 'youtube']
+
 export interface PredictorView {
   season: {
+    series: PredictorSeries
     window_start: string
     window_end: string
     t_planned: number
@@ -296,8 +301,8 @@ export interface PredictorView {
 }
 
 export const adminApi = {
-  getPredictor() {
-    return adminRequest<PredictorView>('/admin/predictor')
+  getPredictor(series: PredictorSeries = 'smi') {
+    return adminRequest<PredictorView>(`/admin/predictor?series=${series}`)
   },
 
   tickPredictor() {

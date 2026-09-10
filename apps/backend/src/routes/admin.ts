@@ -189,8 +189,11 @@ export async function adminRoutes(app: FastifyInstance) {
 
       app.db.transaction(() => {
         app.db.prepare('DELETE FROM votes WHERE question_id = ?').run(questionId)
-        // Remove the YouTube suggestion that published this question so a fresh one can be fetched
+        // Remove the source row that published this question — the YouTube suggestion so a
+        // fresh pair can be fetched, the SMI row so the daily job can recreate the question.
+        // Both reference questions(id), so leaving either behind would make the delete fail.
         app.db.prepare('DELETE FROM youtube_suggestions WHERE question_id = ?').run(questionId)
+        app.db.prepare('DELETE FROM smi_questions WHERE question_id = ?').run(questionId)
         app.db.prepare('DELETE FROM questions WHERE id = ?').run(questionId)
       })()
 
