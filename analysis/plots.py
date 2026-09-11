@@ -252,7 +252,7 @@ def plot_daily_rates(run: Run, out: Path, theme: Theme = LIGHT) -> Path:
         ax,
         theme,
         "Chance of being right on each question",
-        f'weighted majority (expected) with growth rate G = {run.growth_rate:.0%}',
+        f'"Follow i" with growth rate G = {run.growth_rate:.0%}',
     )
     return _save(fig, out, theme)
 
@@ -284,8 +284,8 @@ def plot_cumulative_rates(run: Run, out: Path, theme: Theme = LIGHT) -> Path:
     # visible when it coincides with the committed A/B line, which is common.
     series = [
         ("Best expert (hindsight)", [run.best_expert_rate] * n, theme.series[3], "-"),
-        ("Weighted majority (expected)", follow, theme.series[0], "-"),
-        ("Weighted majority (vote)", wmaj, theme.series[2], "-"),
+        ('"Follow i"', follow, theme.series[0], "-"),
+        ("Weighted majority", wmaj, theme.series[2], "-"),
         ("Plain majority", umaj, theme.series[1], (0, (4, 3))),
     ]
 
