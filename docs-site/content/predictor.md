@@ -89,7 +89,10 @@ The whole guarantee rests on the predictor committing *before* the truth is know
 past results, with its parameters chosen in advance. Two consequences you will run into:
 
 - **Parameters freeze on the first prediction.** After that, `POST /admin/predictor/season`
-  returns 409. Change the window or the learning rate *before* 28 August or not at all.
+  returns 409 for everything except a longer run: a body with only `window_end` and/or
+  `t_planned`, each at or beyond the current value, is still accepted, because extending the
+  horizon touches neither the rate, the seed nor the frozen pool. Change the learning rate
+  *before* the first commit or not at all.
 - **A predicted question cannot be deleted.** `DELETE /admin/questions/:id` returns 409 with
   the round number. Delete a bad question *before* its deadline — after that, its result is
   part of the run's history.

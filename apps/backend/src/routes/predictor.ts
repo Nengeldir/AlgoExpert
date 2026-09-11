@@ -44,6 +44,26 @@ function seriesOf(query: SeriesQuery, reply: FastifyReply): Series | null {
   return series
 }
 
+/**
+ * The part of a season write that is still allowed after the first commit, or null if the
+ * body asks for anything else. Extending means later and more, never earlier or fewer:
+ * shortening the window would drop rounds the ledger already holds.
+ */
+function lockedSeasonExtension(
+  current: SeasonRow,
+  body: SeasonBody,
+): { window_end: string; t_planned: number } | null {
+  const keys = Object.keys(body) as (keyof SeasonBody)[]
+  if (keys.length === 0 || keys.some((k) => k !== 'window_end' && k !== 't_planned')) {
+    return null
+  }
+  const windowEnd = body.window_end ?? current.window_end
+  const tPlanned = body.t_planned ?? current.t_planned
+  if (Date.parse(windowEnd) < Date.parse(current.window_end)) return null
+  if (tPlanned < current.t_planned) return null
+  return { window_end: new Date(windowEnd).toISOString(), t_planned: tPlanned }
+}
+
 export async function predictorRoutes(app: FastifyInstance) {
   app.addHook('preHandler', requireAdmin)
 
@@ -82,10 +102,11 @@ export async function predictorRoutes(app: FastifyInstance) {
 
   // POST /admin/predictor/season?series=… — adjust one series' frozen configuration.
   //
-  // Refused outright once a single round of that series has been committed. That refusal
-  // is the point: the regret bound holds only if the learning rate, the expert pool and
-  // the fill seed were fixed before any outcome was observed, so the endpoint has to stop
-  // being usable exactly when the first prediction lands.
+  // Refused once a single round of that series has been committed, except for extending
+  // the horizon (see lockedSeasonExtension). That refusal is the point: the regret bound
+  // holds only if the learning rate, the expert pool and the fill seed were fixed before
+  // any outcome was observed, so the endpoint has to stop being usable for those exactly
+  // when the first prediction lands.
   app.post<{ Querystring: SeriesQuery; Body: SeasonBody }>('/season', {
     schema: {
       querystring: SERIES_QUERY_SCHEMA,
@@ -107,12 +128,25 @@ export async function predictorRoutes(app: FastifyInstance) {
       if (series === null) return
       const current = ensureSeason(app.db, series)
 
+      // Once a round is committed the only thing that may still change is the horizon:
+      // the window may be pushed later and the planned round count raised. Neither
+      // touches the frozen pool (already stored on the row), the learning rate (the
+      // anytime rate never depended on t_planned; a fixed one is kept as it was) or the
+      // seed, so extending the run does not tune the algorithm against data it has seen.
       if (seasonIsLocked(app.db, series)) {
-        return reply.status(409).send({
-          error:
-            `The ${series} predictor has already committed a prediction. Its parameters are ` +
-            'frozen — changing them now would mean tuning the algorithm against data it has seen.',
-        })
+        const extension = lockedSeasonExtension(current, request.body)
+        if (extension === null) {
+          return reply.status(409).send({
+            error:
+              `The ${series} predictor has already committed a prediction. Its parameters ` +
+              'are frozen — changing them now would mean tuning the algorithm against data ' +
+              'it has seen. Only window_end and t_planned may still be extended.',
+          })
+        }
+        app.db
+          .prepare('UPDATE predictor_season SET window_end = ?, t_planned = ? WHERE series = ?')
+          .run(extension.window_end, extension.t_planned, series)
+        return reply.send({ season: ensureSeason(app.db, series), locked: true })
       }
 
       const next: SeasonRow = {

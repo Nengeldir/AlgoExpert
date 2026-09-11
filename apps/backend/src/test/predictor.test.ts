@@ -127,6 +127,59 @@ describe('season configuration', () => {
     expect(after.statusCode).toBe(409)
     expect(after.json().error).toMatch(/frozen/i)
   })
+
+  it('can still be extended after the first prediction, but never shortened or retuned', async () => {
+    const headers = { authorization: `Bearer ${ADMIN_TOKEN}` }
+    const user = addUser('Ada')
+    const q = addQuestion(DAY_1_CLOSE)
+    addVote(user, q, 'A')
+    tickPredictor(app.db, silent, AFTER_DAY_1)
+    const frozen = ensureSeason(app.db, 'smi')
+
+    // A question after the planned window is not predicted ...
+    const late = addQuestion('2026-09-14T10:00:00.000Z')
+    addVote(user, late, 'B')
+    const afterLate = new Date('2026-09-14T12:00:00.000Z')
+    tickPredictor(app.db, silent, afterLate)
+    const committed = () => buildPredictorView(app.db, 'smi').rounds.map((r) => r.question_id)
+    expect(committed()).toEqual([q])
+
+    // ... until the window is pushed past it. Rate, seed and pool stay as they were.
+    const extend = await app.inject({
+      method: 'POST',
+      url: '/admin/predictor/season',
+      headers,
+      payload: { window_end: '2026-09-30T22:00:00.000Z', t_planned: frozen.t_planned + 10 },
+    })
+    expect(extend.statusCode).toBe(200)
+    expect(extend.json().locked).toBe(true)
+    const extended = ensureSeason(app.db, 'smi')
+    expect(extended.window_end).toBe('2026-09-30T22:00:00.000Z')
+    expect(extended.t_planned).toBe(frozen.t_planned + 10)
+    expect(extended.learning_rate).toBe(frozen.learning_rate)
+    expect(extended.fill_seed).toBe(frozen.fill_seed)
+    expect(extended.expert_pool_json).toBe(frozen.expert_pool_json)
+
+    tickPredictor(app.db, silent, afterLate)
+    expect(committed()).toEqual([q, late])
+
+    for (const payload of [
+      { window_end: '2026-09-01T22:00:00.000Z' }, // earlier than the current end
+      { t_planned: 1 }, // fewer rounds than planned
+      { window_end: '2026-10-31T22:00:00.000Z', learning_rate: 0.1 }, // mixed with a frozen field
+      { fill_seed: 7 },
+      {},
+    ]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/admin/predictor/season',
+        headers,
+        payload,
+      })
+      expect(res.statusCode, JSON.stringify(payload)).toBe(409)
+    }
+    expect(ensureSeason(app.db, 'smi').window_end).toBe('2026-09-30T22:00:00.000Z')
+  })
 })
 
 describe('committing predictions', () => {
