@@ -177,8 +177,8 @@ export async function createDailySmiQuestion(
 export async function resolveExpiredSmiQuestions(
   db: BetterSqlite3.Database,
   log: (msg: string) => void = console.log,
+  now: Date = new Date(),
 ): Promise<void> {
-  const now = new Date()
   const today = zurichDate(now)
   const hour = zurichHour(now)
 
@@ -213,17 +213,7 @@ export async function resolveExpiredSmiQuestions(
     const todayClose = closeMap.get(row.question_date)
 
     if (todayClose == null) {
-      if (isPast) {
-        // No data for a past date — most likely a public holiday; remove the question
-        log(
-          `[smi] question ${row.question_id}: no data for ${row.question_date} (holiday?), removing`,
-        )
-        db.transaction(() => {
-          db.prepare('DELETE FROM votes WHERE question_id = ?').run(row.question_id)
-          db.prepare('DELETE FROM smi_questions WHERE question_id = ?').run(row.question_id)
-          db.prepare('DELETE FROM questions WHERE id = ?').run(row.question_id)
-        })()
-      }
+      if (isPast) cleanUpHoliday(db, row, closes, log)
       continue
     }
 
@@ -243,4 +233,60 @@ export async function resolveExpiredSmiQuestions(
       `[smi] question ${row.question_id} resolved → ${ground_truth} (${label}: ${todayClose.toFixed(2)} vs ${row.prev_close.toFixed(2)})`,
     )
   }
+}
+
+/**
+ * A past question date with no close in the feed is *probably* a public holiday, in which
+ * case the question was created by mistake and should go away. But "no close yet" also
+ * happens when the data provider is simply late: on 2026-09-11 the resolve job ran at
+ * 22:03 UTC, Yahoo had not published Friday's close, and in Zurich it was already
+ * Saturday — so a real trading day with 43 votes was queued for deletion. Only a FOREIGN
+ * KEY on predictor_rounds rolled that back.
+ *
+ * Two guards, either of which skips the delete:
+ *  1. The feed must already contain a *later* trading day than the question date. A feed
+ *     that ends before the question date has not caught up yet, holiday or not.
+ *  2. A question that people voted on, or that the predictor has committed a round for,
+ *     is never deleted automatically. On a real holiday an admin resolves it by hand
+ *     (POST /admin/questions/:id/resolve) or removes it (DELETE /admin/questions/:id).
+ */
+function cleanUpHoliday(
+  db: BetterSqlite3.Database,
+  row: SmiQuestionRow,
+  closes: DayClose[],
+  log: (msg: string) => void,
+): void {
+  const latestFeedDate = closes.length > 0 ? closes[closes.length - 1].date : null
+  if (latestFeedDate == null || latestFeedDate <= row.question_date) {
+    log(
+      `[smi] question ${row.question_id}: no close for ${row.question_date} yet and the feed ends at ${latestFeedDate ?? 'no data'} — waiting for the provider`,
+    )
+    return
+  }
+
+  const voteCount = (
+    db.prepare('SELECT COUNT(*) AS n FROM votes WHERE question_id = ?').get(row.question_id) as {
+      n: number
+    }
+  ).n
+  const round = db
+    .prepare('SELECT round_index FROM predictor_rounds WHERE question_id = ?')
+    .get(row.question_id) as { round_index: number } | undefined
+
+  if (voteCount > 0 || round) {
+    const reasons = [
+      voteCount > 0 ? `${voteCount} vote(s)` : null,
+      round ? `predictor round ${round.round_index}` : null,
+    ].filter(Boolean)
+    log(
+      `[smi] question ${row.question_id}: no close for ${row.question_date} (holiday?) but it has ${reasons.join(' and ')} — not deleting. Resolve it via POST /admin/questions/${row.question_id}/resolve or delete it via DELETE /admin/questions/${row.question_id}`,
+    )
+    return
+  }
+
+  log(`[smi] question ${row.question_id}: no data for ${row.question_date} (holiday?), removing`)
+  db.transaction(() => {
+    db.prepare('DELETE FROM smi_questions WHERE question_id = ?').run(row.question_id)
+    db.prepare('DELETE FROM questions WHERE id = ?').run(row.question_id)
+  })()
 }
